@@ -35,14 +35,8 @@ class LoginPage:
         if self.username == 'Username' or self.password == 'Password':
             drawRect(app.width*0.122396, app.height*0.641602,
                     app.width*0.287109, app.height*0.084961,
-                    fill=rgb(110, 0, 18), border='black', borderWidth=2, opacity=80)
-        
+                    fill=rgb(110, 0, 18), border='black', borderWidth=2, opacity=80)  
 
-        
-        
-
-
-        
     def highlightBox(self, boxNumber, app):
 
         if boxNumber == 1:
@@ -55,7 +49,7 @@ class LoginPage:
                 app.width*0.279948, app.height*0.067383,
                 fill=None, border='white', borderWidth=4, opacity=100)
 
-    def loginKeyPress(self, key, app):
+    def loginKeyPress(self,app, key):
         if key == 'enter' and self.username != 'Username' and self.password != 'Password' :
             username = self.username
             password = self.password
@@ -79,7 +73,7 @@ class LoginPage:
                 if len(self.password) < 15:
                     self.password += key
 
-    def loginMousePress(self, mouseX, mouseY, app):
+    def loginMousePress(self, app, mouseX, mouseY):
         if (app.width*0.123047 <= mouseX <= app.width*0.405599 and
             app.height*0.344727 <= mouseY <= app.height*0.41211):
             self.box1Highlighted = True  
@@ -89,6 +83,8 @@ class LoginPage:
               app.height*0.450195 <= mouseY <= app.height*0.517578):
             self.box2Highlighted = True
             self.box1Highlighted = False
+
+        
         
         
                     

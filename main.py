@@ -8,7 +8,8 @@ def onAppStart(app):
     app.loginPage = LoginPage()
     app.terminal = terminal(app)
     app.desktop = desktop(app)
-    app.screen = 'loginPage'  # Start with the login screen
+    app.screen = 'terminal'  # Start with the login screen
+    app.tick = 0
     
 
     
@@ -22,15 +23,20 @@ def redrawAll(app):
         
 def onMousePress(app, mouseX, mouseY):
     if app.screen == 'loginPage':
-        app.loginPage.loginMousePress(mouseX, mouseY, app)
+        app.loginPage.loginMousePress(app , mouseX, mouseY)
     elif app.screen  == 'terminal':
         pass
          
 
-def onKeyPress(app, key):
+def onKeyPress(app, key, modifiers):
     if app.screen == 'loginPage':
-        app.loginPage.loginKeyPress(key, app)
+        app.loginPage.loginKeyPress(app, key)
     elif app.screen == 'terminal':
-        app.terminal.onKeyPressTerminal(key)   
+        app.terminal.onKeyPressTerminal(app, key, modifiers)   
+    elif app.screen == 'desktop':
+        app.desktop.onKeyPressDesktop(app, key, modifiers)
+
+def onStep(app):
+    app.tick += 1
 
 runApp(app.width, app.height)

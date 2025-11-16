@@ -12,5 +12,6 @@ class desktop():
         drawImage(self.folderIcon, 150, 50, width=64, height=64)
     
 
-    def onKeyPressDesktop(self, key):
-        pass
+    def onKeyPressDesktop(self, app, key, modifiers):
+        if modifiers == ['control'] and key == 't':
+            app.screen = 'terminal'

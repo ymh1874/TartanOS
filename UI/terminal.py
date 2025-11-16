@@ -14,10 +14,17 @@ class terminal():
         self.textLines = [f'Welcome to TartanOS {app.loginPage.username}!']
         self.currLine = ''
         self.files = {
-            'readme.txt': 'This is a sample readme file.\nFeel free to edit it!',
-            'notes.txt': 'These are some sample notes.\nRemember to check them later.'
-
+            'desktop':
+                {'folder1' : 
+                    {'secret.txt': None, 
+                    'folder3' : 
+                         {'good': None}},
+                'readme.txt': 'This is a sample readme file.\nFeel free to edit it!',
+                'notes.txt': 'These are some sample notes.\nRemember to check them later.'
+                }
         }
+        app.path = []
+        self.currfiles = self.files
 
         self.commands = {
             'ls': self.cmdLs,
@@ -29,7 +36,9 @@ class terminal():
             'txt': self.cmdTxt, 
             'style': self.cmdStyle,
             'touch': self.cmdTouch,
-            'gui': self.cmdGui
+            'gui': self.cmdGui,
+            'cd': self.cmdCd,
+            'pwn': self.cmdPwn
         }
 
     def draw(self, app):
@@ -48,16 +57,16 @@ class terminal():
         drawLabel(f'{self.prompt}{self.currLine}', self.margin, currentY,
                   size=self.fontSize, fill=self.textColor, font='monospace', align='left')
         self.drawCursor()
+
     def drawCursor(self):
         # location indicator for terminal
-        cursorX = self.margin + len(self.prompt + self.currLine) * (self.fontSize * 0.6)
-        cursorY =  + len(self.textLines) * self.lineSpacing
-        drawRect(cursorX, cursorY, 10, self.fontSize, fill=self.textColor)
+        if app.tick %  72 > 36:
+            cursorX = self.margin + len(self.prompt + self.currLine) * (self.fontSize * 0.6)
+            cursorY = len(self.textLines) * self.lineSpacing
+            drawRect(cursorX, cursorY, 10, self.fontSize, fill=self.textColor)
 
-    def drawLines(self, app):
-        pass
 
-    def onKeyPressTerminal(self, key):
+    def onKeyPressTerminal(self, app, key, modifiers):
         if key == 'enter':
             command = self.currLine.strip()
             self.textLines.append(f'{self.prompt}{self.currLine}')
@@ -85,7 +94,10 @@ class terminal():
             self.textLines.append(f'command not found: {cmd}')
 
     def cmdLs(self, _):
-        self.textLines.append('  '.join(sorted(self.files.keys())))
+        if self.path == []:
+            self.textLines.append('Main Directory')
+            return
+        self.textLines.append('  '.join(sorted(self.currfiles.keys())))
 
     def cmdCat(self, args):
         if not args:
@@ -106,11 +118,51 @@ class terminal():
             return
 
         filename = args[0].lower()
-        if filename in self.files:
+        if filename in self.currfiles:
             self.textLines.append(f'touch: {filename}: file already exists')
         else:
-            self.files[filename] = 'null'
+            self.currfiles[filename] = 'null'
             self.textLines.append(f'Created file: {filename}')
+    def cmdCd(self, args):
+
+        if not args:
+            self.textLines.append('usage: cd <foldername>')
+
+        else:
+            print(app.path)
+            foldername = args[0].lower()
+            if foldername == '`':
+                self.currfiles = self.files
+                app.path = []
+            elif foldername == '..':
+                if app.path == []:
+                    self.textLines.append('Already at main directory')
+                    return
+                self.currfiles = self.getParentPath(self.currfiles)
+                app.path.pop()
+            elif foldername not in self.currfiles:
+                self.textLines.append(f'Folder does not exist')
+            elif self.currfiles[foldername] == None:
+                self.textLines.append('This is not a folder!')
+            else: 
+                self.currfiles = self.currfiles[foldername]
+                app.path.append(foldername)
+            
+                
+    def getParentPath(self, currentPath):
+        # get parent directory
+        parentPath = ''
+        for i in range(len(app.path)):
+            if app.path[i] == currentPath:
+                 parentPath = app.path[i - 1]
+        return parentPath
+    
+    def getcurrPath(self):
+        return '/'.join(app.path) if app.path else 'desktop'
+    
+    def cmdPwn(self, _):
+        self.textLines.append(self.getcurrPath())
+
 
     def cmdClear(self, _):
         self.textLines = []
