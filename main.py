@@ -26,6 +26,12 @@ def onMousePress(app, mouseX, mouseY):
         app.loginPage.loginMousePress(app , mouseX, mouseY)
     elif app.screen  == 'terminal':
         pass
+    elif app.screen == 'desktop':
+        pass
+    
+def onMouseDrag(app, mouseX, mouseY):
+        if app.screen == 'desktop':
+            app.desktop.onMouseDragDesktop(app, mouseX, mouseY)
          
 
 def onKeyPress(app, key, modifiers):

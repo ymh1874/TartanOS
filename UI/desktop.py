@@ -5,6 +5,7 @@ class desktop():
         self.backgroundColor = 'assets/desktopBackground.png'
         self.terminalIcon = 'assets/terminalIcon.png'
         self.folderIcon = 'assets/folderIcon.png'
+        self.rectHighlight = True
 
     def draw(self, app):
         drawImage(self.backgroundColor, 0, 0, width=app.width, height=app.height)
@@ -15,3 +16,19 @@ class desktop():
     def onKeyPressDesktop(self, app, key, modifiers):
         if modifiers == ['control'] and key == 't':
             app.screen = 'terminal'
+        elif modifiers == ['control'] and key == 'l':
+            app.screen = 'loginPage'
+
+    def onMouseDragDesktop(self, app, mouseX, mouseY):
+        if not self.rectHighlight:
+            return
+        # original cursor position
+        ogX = mouseX
+        ogY = mouseY
+
+        self.rectangleHighlight(mouseX, mouseY, ogX, ogY)
+
+    def rectangleHighlight(self, mouseX, mouseY, ogX, ogY):
+        drawRect(ogX, ogY, mouseX, mouseY, fill=None, border='white', borderWidth=4, opacity=100)
+
+    
