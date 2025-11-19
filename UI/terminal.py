@@ -63,8 +63,11 @@ class terminal():
             'pwn': self.cmdPwn
         }
 
-        # Key Behaviour
+        # traverse Behaviour
         self.upTick = 0
+
+        # text editor vars
+        self.editorState = False
 
           
 
@@ -124,10 +127,12 @@ class terminal():
             return
 
         filename = args[0].lower()
+        newPath = f'{self.currPath.rstrip('/')}/{filename}'
         if filename in self.currfiles:
             self.textLines.append(f'touch: {filename}: file already exists')
         else:
-            self.currfiles[filename] = None
+            self.currfiles[filename] = 'file'
+            self.fileSys[newPath] = {'content': 'None', 'type': 'text file'}
             self.textLines.append(f'Created file: {filename}')
 
     def cmdCd(self, args):
@@ -171,6 +176,9 @@ class terminal():
             else: 
                 # rstrip for cases where path is root
                 newPath = f'{self.currPath.rstrip('/')}/{folderName}'
+                if newPath not in self.fileSys:
+                    self.textLines.append('Path does not exist (not created)')
+                    return
                 self.currfiles = self.fileSys[newPath]
                 self.currPath = newPath
                 print(self.currPath)
@@ -217,11 +225,20 @@ class terminal():
             return
 
         filename = args[0].lower()
-        if filename in self.files:
-            self.textLines.append(f'Opening {filename} in text editor... (not implemented)')
-            #self.textEditor(self.files[filename])
+        interface = args[1].lower()
+        if filename in self.currfiles and interface == '-t':
+            self.textEditor(filename)
+        elif filename in self.currfiles and interface == '-i':
+            self.textLines.append(f'not implemented yet')
         else:
             self.textLines.append(f'txt: {filename}: file not found')
+
+    def textEditor(self, content):
+            self.editorState = True
+            drawRect(0, 0, app.width, app.height, fill='black')
+            drawLabel('Text Editor', app.width / 2, app.height / 2,
+                        size=30, fill='white', font='monospace', align='center')
+
 
     def cmdStyle(self, args):
         if not args:
@@ -239,23 +256,28 @@ class terminal():
             
     def cmdGui(self, _):
         app.screen = 'desktop'
-
-
+    #########################
+    # draw func
+    ##########################
     def draw(self, app):
         # Terminal body
-        drawRect(0, 0, app.width, app.height, fill=self.backgroundColor)
+        if self.editorState:
+            self.editorTerminal(self, app)
 
-        availableLines = int((app.height - (self.margin * 2)) // self.lineSpacing)
-        history = self.textLines[-availableLines:]
+        else:
+            drawRect(0, 0, app.width, app.height, fill=self.backgroundColor)
 
-        for i, line in enumerate(history):
-            y = self.margin + i * self.lineSpacing
-            drawLabel(line, self.margin, y, size=self.fontSize, fill=self.textColor,
-                      font='monospace', align='left')
+            availableLines = int((app.height - (self.margin * 2)) // self.lineSpacing)
+            history = self.textLines[-availableLines:]
 
-        currentY = self.margin + len(history) * self.lineSpacing
-        drawLabel(f'{self.prompt}{self.currLine}', self.margin, currentY,
-                  size=self.fontSize, fill=self.textColor, font='monospace', align='left')
+            for i, line in enumerate(history):
+                y = self.margin + i * self.lineSpacing
+                drawLabel(line, self.margin, y, size=self.fontSize, fill=self.textColor,
+                        font='monospace', align='left')
+
+            currentY = self.margin + len(history) * self.lineSpacing
+            drawLabel(f'{self.prompt}{self.currLine}', self.margin, currentY,
+                    size=self.fontSize, fill=self.textColor, font='monospace', align='left')
         self.drawCursor()
 
     def drawCursor(self):
@@ -265,10 +287,12 @@ class terminal():
             cursorY = len(self.textLines) * self.lineSpacing
             drawRect(cursorX, cursorY, 10, self.fontSize, fill=self.textColor)
 
-    def textEditor(self, content):
-          drawRect(0, 0, app.width, app.height, fill='black')
-          drawLabel('Text Editor', app.width / 2, app.height / 2,
-                    size=30, fill='white', font='monospace', align='center')
+    def editorTerminal(self, app):
+        drawRect(0, 0, app.width, app.height)
+        drawLabel('Controls', self.margin, app.height * 0.9, size = self.fontSize, fill = self.textColor)
+    
+    ###########################################
+    ###########################################
 
     def trimHistory(self):
         overflow = len(self.textLines) - self.maxLines
@@ -281,9 +305,10 @@ class terminal():
         if key == 'enter':
             command = self.currLine.strip()
             self.pastLines.append(self.currLine)
+            print(self.pastLines)
             self.textLines.append(f'{self.prompt}{self.currLine}')
             self.currLine = ''
-            self.uptick = 0
+            self.upTick = len(self.pastLines)
 
             if command:
                 self.executeCommand(command)
@@ -293,8 +318,12 @@ class terminal():
         elif key == 'space':
             self.currLine += ' '
         elif key == 'up':
-            if self.upTick > len(self.pastLines):
+            if self.upTick > 0:
+                self.upTick -= 1
+                self.currLine = self.pastLines[self.upTick]
+        elif key == 'down':
+            if self.upTick < len(self.pastLines) -1:
                 self.upTick += 1
-                self.currLine = self.pastLines[self.upTick - 11]
+                self.currLine = self.pastLines[self.upTick]
         elif len(key) == 1:
             self.currLine += key

@@ -5,7 +5,7 @@ class LoginPage:
         self.box1Highlighted = False
         self.box2Highlighted = False
         self.background = 'assets/loginBackground.png'
-        self.username = 'Terry Davis'
+        self.username = 'yousef'
         self.password = 'Password'
         self.loginPressed = False
         
