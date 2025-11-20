@@ -27,39 +27,32 @@ However, this project differs by including a full desktop environment (icons, wa
 
 ## Structural Plan
 
-The project will be divided into several files and logical modules:
+The codebase is modularized to separate UI, core mode management, and system logic so features can scale independently. Below is the current layout and responsibilities (map local paths to responsibilities):
 
-### **1. main.py**
+- `main.py`
+   - App bootstrap: initialize `app` fields, create `FileSystem` and `UserAuth`, set `app.tick`, and register mode manager and top-level UI objects.
 
-* Initializes the app and modes
-* Loads desktop and terminal objects
-* Handles global resizing logic
+- `config.py`
+   - Centralized configuration values (colors, default sizes, constants).
 
-### **2. desktop.py**
+- `core/` (mode + rendering orchestration)
+   - `appModes.py`: mode manager that switches between `desktop` and `terminal` modes and dispatches key/ redraw events.
+   - `inputHandler.py`, `renderer.py`: helpers for global input handling and rendering orchestration where applicable.
 
-* Desktop rendering logic
-* Icon classes
-* Wallpaper and layout functions
+- `systems/` (non-UI system logic)
+   - `fileSystem.py`: the simulated file system implementation.
+   - `pathUtils.py`: path resolution helpers (join, normalize, parent path logic).
+   - `commandRegistry.py`: command handlers moved out of UI; each `cmd*` (ls, cat, cd, touch, etc.) lives here and operates against the terminal and `FileSystem`.
+   - `userAuth.py`: authentication logic.
 
-### **3. terminal.py**
+- `ui/` (visual components)
+   - `ui/desktop/` — desktop view implementation (`desktop.py`, `widgets.py`) and icon widgets.
+   - `ui/terminal/` — terminal UI and input handling split into `terminal.py` and rendering helpers (`terminalRenderer.py`). The terminal UI should be thin: it draws labels and forwards command execution to `systems.commandRegistry` and filesystem operations to `systems.fileSystem`.
 
-* Terminal class
-* Command parser
-* All cmd_* functions (`cmdCd`, `cmdLs`, `cmdCat`, etc.)
-* File system representation 
-* Input handling and line history
+- `assets/` — images and icons used by the UI and desktop.
 
-### **4. filesystem.py**
 
-* Helper functions for absolute/relative paths
-* Parent/child traversal logic
-* Directory/file validity checks
-
-### **5. assets/**
-
-* Images (icons, wallpapers)
-* Fonts (maybe)
-
+This structural plan reflects the current repository layout and the modularization work already performed.
 ---
 
 ## Algorithmic Plan
