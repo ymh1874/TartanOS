@@ -136,12 +136,10 @@ This approach ensures correctness and avoids edge cases such as root navigation,
 
 The project will only use:
 
-* **cmu_graphics** (required and permitted)
-* **math** (standard library; allowed)
-* **random** (for optional wallpaper variations)
+* **cmu_graphics** 
+* **math** 
+* **random** 
 
-No external modules, hardware, networking,
- or non‑approved libraries will be used.
 
 ---
 
