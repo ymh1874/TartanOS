@@ -2,7 +2,7 @@
 from cmu_graphics import *
 from systems.pathUtils import PathUtils
 from systems.commandRegistry import CommandRegistry
-
+from core.appModes import ModeManager
 class Terminal:
     def __init__(self, app):
         # external
@@ -10,13 +10,19 @@ class Terminal:
         self.fs = app.fs
         
 
+        # terminal bounds (adjust these to resize/reposition the terminal)
+        self.x = 0                    # left edge
+        self.y = 0                    # top edge
+        self.w = app.width            # width (full screen)
+        self.h = app.height           # height (full screen)
+        
         # visual
         self.textColor = 'white'
         self.backgroundColor = 'black'
-        self.fontSize = max(20, int(app.width * 0.018))
+        self.fontSize = max(12, int(self.w * 0.018))
         self.lineSpacing = self.fontSize * 1.3
-        self.margin = app.width * 0.02
-        # (cursor alignment follows backup implementation)
+        self.margin = self.w * 0.02
+
         # small pixel calibration for caret vertical position (positive moves cursor down)
         self.cursorCalibration = -12
 
@@ -36,19 +42,15 @@ class Terminal:
         self.commands = CommandRegistry(self)
 
         # login
-        self.Stage = "username"
+        self.stage = "username"
         self.tempInput = ""
         self.tempUsername = ""
         self.tempPassword = ""
 
-        # init
-        self.output("Welcome to TartanOS Terminal")
-        self.output("Login required")
+        # init     
+        self.output("Login required....")
 
-    # ===========================
     # Login Handling
-    # ===========================
-
     def processLoginEnter(self):
         if self.stage == "username":
             self.tempUsername = self.tempInput
@@ -62,25 +64,21 @@ class Terminal:
             if self.app.auth.verify(self.tempUsername, self.tempPassword):
                 self.username = self.tempUsername
                 self.output("Access Granted")
-                self.stage = "done"
+                self.stage = "desktop"
+                self.app.modeManager.setMode('desktop')
+                
             else:
                 self.output("Access Denied")
                 self.stage = "username"
 
-    # ===========================
-    # Path Resolution
-    # ===========================
-
+    # Path Resolution   
     def resolvePath(self, name):
         if name.startswith('/'):
             return name
         return PathUtils.join(self.currPath, name)
 
-    # ===========================
     # Output
-    # ===========================
-
-    def output(self, text):
+    def output(self, text, args = None):
         self.textLines.append(text)
         if len(self.textLines) > self.maxLines:
             self.textLines.pop(0)
@@ -88,12 +86,9 @@ class Terminal:
     def clear(self):
         self.textLines = []
 
-    # ===========================
     # Input Handling
-    # ===========================
-
     def onKeyPress(self, app, key, modifiers):
-        if self.stage != "done":
+        if self.stage != "desktop":
             self.handleLoginInput(key)
             return
 
@@ -143,42 +138,58 @@ class Terminal:
         elif len(key) == 1:
             self.tempInput += key
 
-    # ===========================
     # Drawing
-    # ===========================
-
     def draw(self, app):
-        drawRect(0, 0, app.width, app.height, fill=self.backgroundColor)
+        if self.stage != 'desktop':
+            # recalculate bounds on each draw to handle window resizes
+            self.w = app.width
+            self.h = app.height
+            self.fontSize = max(12, int(self.w * 0.018))
+            self.lineSpacing = self.fontSize * 1.3
+            self.margin = self.w * 0.015
+        else:
+            self.x = 0.220 * app.width
+            self.y = 0.030 * app.height
+            self.w = 0.7 * app.width
+            self.h = 0.6 * app.height
+            self.fontSize = max(12, int(self.w * 0.018))
+            self.lineSpacing = self.fontSize * 1.3
+            self.margin = self.w * 0.015
+
+        # draw terminal background using bounds
+        drawRect(self.x, self.y, self.w, self.h, fill=self.backgroundColor)
 
         # compute how many lines fit and draw history
-        availableLines = int((app.height - 2 * self.margin) // self.lineSpacing)
+        availableLines = int((self.h - 2 * self.margin) // self.lineSpacing)
         history = self.textLines[-availableLines:]
 
-        y = self.margin
+        y = self.y + self.margin
         for line in history:
-            drawLabel(line, self.margin, y, size=self.fontSize, fill=self.textColor,
+            drawLabel(line, self.x + self.margin, y, size=self.fontSize, fill=self.textColor,
                 font='monospace', align='left')
             y += self.lineSpacing
 
         # login mode
-        if self.loginStage != "done":
+        if self.stage != "desktop":
             prompt = (
-                f"Username: {self.tempInput}" if self.loginStage == "username"
+                f"Username: {self.tempInput}" if self.stage == "username"
                 else f"Password: {'*' * len(self.tempInput)}"
             )
-            drawLabel(prompt, self.margin, y, size=self.fontSize,
+            drawLabel(prompt, self.x + self.margin, y, size=self.fontSize,
                     fill=self.textColor, font='monospace', align='left')
             # draw cursor for login input as well
             self.drawCursor(app, y, text=prompt)
             return
+        else:
+            
 
-        # draw input line at the next available Y
-        currentY = self.margin + len(history) * self.lineSpacing
-        drawLabel(f"{self.prompt}{self.currLine}", self.margin, currentY,
-            size=self.fontSize, fill=self.textColor, font='monospace', align='left')
+            # draw input line at the next available y
+            currentY = self.y + self.margin + len(history) * self.lineSpacing
+            drawLabel(f"{self.prompt}{self.currLine}", self.x + self.margin, currentY,
+                size=self.fontSize, fill=self.textColor, font='monospace', align='left')
 
-        # draw cursor at correct y
-        self.drawCursor(app, currentY)
+            # draw cursor at correct y
+            self.drawCursor(app, currentY)
 
         
 
@@ -189,7 +200,7 @@ class Terminal:
 
         # show cursor half the time using app.tick as a frame counter
         if app.tick % 72 > 36:
-            cursorX = self.margin + len(textToMeasure) * (self.fontSize * 0.6)
+            cursorX = self.x + self.margin + len(textToMeasure) * (self.fontSize * 0.6)
             # align cursor vertically with the label's Y (centered in the line spacing)
             cursorY = y + (self.lineSpacing - self.fontSize) / 2 + self.cursorCalibration
             drawRect(cursorX, cursorY, 10, self.fontSize, fill='white')

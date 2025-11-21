@@ -1,4 +1,5 @@
 # core/appModes.py
+
 class ModeManager:
     def __init__(self, app):
         self.app = app
@@ -10,7 +11,14 @@ class ModeManager:
     def redraw(self, app):
         if self.currentMode == 'terminal':
             app.terminal.draw(app)
+        elif self.currentMode == 'desktop':
+            app.desktop.draw(app)
+            app.terminal.draw(app)
+            
+
 
     def keyPress(self, app, key, modifiers):
         if self.currentMode == 'terminal':
             app.terminal.onKeyPress(app, key, modifiers)
+        if self.currentMode == 'desktop':
+            app.desktop.onKeyPress(app, key, modifiers)
