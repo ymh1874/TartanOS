@@ -15,7 +15,9 @@ class CommandRegistry:
             'cd': self.cmdCd,
             'pwn': self.cmdPwn,
             'style': self.cmdStyle,
-            'gui': self.cmdGui
+            'gui': self.cmdGui,
+            'mkdir': self.cmdMkdir,
+            'rm': self.cmdRm
         }
 
     # ========== Commands ==========
@@ -72,11 +74,53 @@ class CommandRegistry:
         self.term.currFiles[name] = "file"
         self.term.output(f"created {name}")
 
+    def cmdMkdir(self, args):
+        if not args:
+            self.term.output("usage: mkdir <foldername>")
+            return
+
+        name = args[0].lower()
+        path = self.term.resolvePath(name)
+
+        if path in self.term.fs.fs:
+            self.term.output("already exists")
+            return
+
+        self.term.fs.fs[path] = {}
+        self.term.currFiles[name] = "folder"
+        self.term.output(f"created folder {name}")
+
+    def cmdRm(self, args):
+        if not args:
+            self.term.output("usage: rm <filename/foldername>")
+            return
+
+        name = args[0].lower()
+        path = self.term.resolvePath(name)
+
+        if not self.term.fs.exists(path):
+            self.term.output("no such file or folder")
+            return
+
+        # remove from parent directory listing
+        del self.term.currFiles[name]
+        # remove from filesystem
+        del self.term.fs.fs[path]
+        self.term.output(f"removed {name}")
+
     def cmdCd(self, args):
         if not args:
             self.term.output("usage: cd <folder>")
             return
-
+        if args[0] == "..":
+            if self.term.currPath == "/":
+                return
+            parentPath = '/'.join(self.term.currPath.split('/')[:-1])
+            if parentPath == "":
+                parentPath = "/"
+            self.term.currPath = parentPath
+            self.term.currFiles = self.term.fs.get(self.term.currPath)
+            return
         target = args[0].lower()
         newPath = self.term.resolvePath(target)
 
@@ -102,4 +146,5 @@ class CommandRegistry:
         self.term.output(f"color changed to {args[0]}")
 
     def cmdGui(self, args):
-        self.term.switchToGUI()
+        self.term.output("Switching to GUI mode...")
+        self.term.app.modeManager.setMode('desktop')

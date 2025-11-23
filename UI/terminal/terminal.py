@@ -41,35 +41,41 @@ class Terminal:
         # command system
         self.commands = CommandRegistry(self)
 
-        # login
-        self.stage = "username"
-        self.tempInput = ""
+        # login stage - tracks if we're logging in or using terminal
+        self.isLoggingIn = True
+        self.loginStage = "username"  # "username" or "password"
         self.tempUsername = ""
         self.tempPassword = ""
+        self.profilePicPath = 'assets/profilePic.png'  # placeholder profile picture
 
-        # init     
-        self.output("Login required....")
+        # init display
+        if self.isLoggingIn:
+            self.output("Welcome to TartanOS")
 
     # Login Handling
     def processLoginEnter(self):
-        if self.stage == "username":
+        if self.loginStage == "username":
             self.tempUsername = self.tempInput
             self.tempInput = ""
-            self.stage = "password"
-
-        elif self.stage == "password":
+            self.loginStage = "password"
+            self.output(f"Username: {self.tempUsername}")
+            
+        elif self.loginStage == "password":
             self.tempPassword = self.tempInput
             self.tempInput = ""
 
+            # verify credentials
             if self.app.auth.verify(self.tempUsername, self.tempPassword):
                 self.username = self.tempUsername
                 self.output("Access Granted")
-                self.stage = "desktop"
+                self.isLoggingIn = False
+                self.loginStage = "username"  # reset for next login
+                # switch to desktop mode
                 self.app.modeManager.setMode('desktop')
-                
             else:
-                self.output("Access Denied")
-                self.stage = "username"
+                self.output("Access Denied - Try again")
+                self.loginStage = "username"
+                self.tempUsername = ""
 
     # Path Resolution   
     def resolvePath(self, name):
@@ -88,10 +94,12 @@ class Terminal:
 
     # Input Handling
     def onKeyPress(self, app, key, modifiers):
-        if self.stage != "desktop":
+        # handle login input
+        if self.isLoggingIn:
             self.handleLoginInput(key)
             return
 
+        # handle terminal input (ctrl+t from desktop goes to terminal mode after login)
         if key == "enter":
             cmd = self.currLine.strip()
             # save history and show the entered line
@@ -130,6 +138,7 @@ class Terminal:
             self.currLine += key
 
     def handleLoginInput(self, key):
+        # handle input during login stage
         if key == 'enter':
             self.processLoginEnter()
             return
@@ -138,23 +147,13 @@ class Terminal:
         elif len(key) == 1:
             self.tempInput += key
 
-    # Drawing
     def draw(self, app):
-        if self.stage != 'desktop':
-            # recalculate bounds on each draw to handle window resizes
-            self.w = app.width
-            self.h = app.height
-            self.fontSize = max(12, int(self.w * 0.018))
-            self.lineSpacing = self.fontSize * 1.3
-            self.margin = self.w * 0.015
-        else:
-            self.x = 0.220 * app.width
-            self.y = 0.030 * app.height
-            self.w = 0.7 * app.width
-            self.h = 0.6 * app.height
-            self.fontSize = max(12, int(self.w * 0.018))
-            self.lineSpacing = self.fontSize * 1.3
-            self.margin = self.w * 0.015
+        # recalculate all dimensions on each draw to handle window resizes
+        self.w = app.width
+        self.h = app.height
+        self.fontSize = max(12, int(self.w * 0.018))
+        self.lineSpacing = self.fontSize * 1.3
+        self.margin = self.w * 0.015
 
         # draw terminal background using bounds
         drawRect(self.x, self.y, self.w, self.h, fill=self.backgroundColor)
@@ -169,39 +168,42 @@ class Terminal:
                 font='monospace', align='left')
             y += self.lineSpacing
 
-        # login mode
-        if self.stage != "desktop":
-            prompt = (
-                f"Username: {self.tempInput}" if self.stage == "username"
-                else f"Password: {'*' * len(self.tempInput)}"
-            )
-            drawLabel(prompt, self.x + self.margin, y, size=self.fontSize,
-                    fill=self.textColor, font='monospace', align='left')
-            # draw cursor for login input as well
-            self.drawCursor(app, y, text=prompt)
-            return
+        # draw login input if logging in
+        if self.isLoggingIn:
+            if self.loginStage == "username":
+                prompt = f"Username: {self.tempInput}"
+            else:
+                prompt = f"Password: {'*' * len(self.tempInput)}"
+            drawLabel(prompt, self.x + self.margin, y,
+                size=self.fontSize, fill=self.textColor, font='monospace', align='left')
+            # draw cursor for login
+            self.drawCursor(app, y)
         else:
-            
-
-            # draw input line at the next available y
+            # draw terminal input line
             currentY = self.y + self.margin + len(history) * self.lineSpacing
             drawLabel(f"{self.prompt}{self.currLine}", self.x + self.margin, currentY,
                 size=self.fontSize, fill=self.textColor, font='monospace', align='left')
-
             # draw cursor at correct y
             self.drawCursor(app, currentY)
 
         
 
-    def drawCursor(self, app, y, text=None):
-        """Blinking cursor. Accepts optional `text` to compute cursor X (used for login prompts)."""
-        # determine the text to measure for cursor X
-        textToMeasure = text if text is not None else (self.prompt + self.currLine)
+    def drawCursor(self, app, y):
+        # blinking cursor using app.tick as frame counter
+        if self.isLoggingIn:
+            # login mode cursor
+            if self.loginStage == "username":
+                textToMeasure = f"Username: {self.tempInput}"
+            else:
+                textToMeasure = f"Password: {'*' * len(self.tempInput)}"
+        else:
+            # terminal mode cursor
+            textToMeasure = self.prompt + self.currLine
 
-        # show cursor half the time using app.tick as a frame counter
+        # show cursor half the time
         if app.tick % 72 > 36:
             cursorX = self.x + self.margin + len(textToMeasure) * (self.fontSize * 0.6)
-            # align cursor vertically with the label's Y (centered in the line spacing)
+            # align cursor vertically with the label's Y
             cursorY = y + (self.lineSpacing - self.fontSize) / 2 + self.cursorCalibration
             drawRect(cursorX, cursorY, 10, self.fontSize, fill='white')
 

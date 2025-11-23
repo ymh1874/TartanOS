@@ -1,44 +1,47 @@
 from cmu_graphics import *
-from core.appModes import ModeManager
-from ui.desktop.onScreenKeyboard import OnScreenKeyboard
 
-class desktop():
+class Desktop():
     def __init__(self, app):
         self.app = app
-        # instantiate keyboard with app so it can compute sizes
-        self.keyboard = OnScreenKeyboard(app)
-        self.backgroundColor = './assets/desktopBackground.png'
-        self.terminalIcon = 'assets/terminalIcon.png'
-        self.folderIcon = 'assets/folderIcon.png'
-        self.rectHighlight = True
-
-       
+        self.bgColor = rgb(80, 90, 100)  # fallback background color
+        self.backgroundImage = 'assets/backgrounds/desktopBackground.png'
+        self.terminalOpen = False
+        self.filesDisplayed = [] # not implemented yet
 
     def draw(self, app):
-        # background
-        drawRect(0,0, app.width, app.height, fill = 'green')
-        # keyboard
-        self.keyboard.keyboardDraw(app)
+        # draw desktop background image
+        try:
+            drawImage(self.backgroundImage, 0, 0, width=app.width, height=app.height)
+        except:
+            # fallback to solid color if image not found
+            drawRect(0, 0, app.width, app.height, fill=self.bgColor)
     
-    
-    def onKeyPress(self, app, key, modifiers):
-        self.keyboard.onKeyPressKeyboard(app, key, modifiers)
-        if modifiers == ['control'] and key == 't':
-            self.app.modeManager.setMode('terminal')
-        elif modifiers == ['control'] and key == 'l':
-            app.screen = 'loginPage'
+    def drawFiles(self, app):
+        # draw desktop icons for files and folders
+        iconSize = max(50, int(app.width * 0.07))
+        padding = iconSize * 0.3
+        startX = padding
+        startY = padding + 50  # leave space for title bar
+
+        x = startX
+        y = startY
+
+        self.filesDisplayed = []
+        pass
         
 
-    def onMouseDragDesktop(self, app, mouseX, mouseY):
-        if not self.rectHighlight:
-            return
-        # original cursor position
-        ogX = mouseX
-        ogY = mouseY
-
-        self.rectangleHighlight(mouseX, mouseY, ogX, ogY)
-
-    def rectangleHighlight(self, mouseX, mouseY, ogX, ogY):
-        drawRect(ogX, ogY, mouseX, mouseY, fill=None, border='white', borderWidth=4, opacity=100)
+        
+    
+    def onKeyPress(self, app, key, modifiers):
+        # ctrl+t to toggle terminal mode
+        if modifiers == ['control'] and key == 't':
+            if self.terminalOpen:
+                # close terminal, go back to desktop
+                self.terminalOpen = False
+                self.app.modeManager.setMode('desktop')
+            else:
+                # open terminal
+                self.terminalOpen = True
+                self.app.modeManager.setMode('terminal')
 
     
