@@ -37,3 +37,10 @@ class ModeManager:
         #  mouse input to current mode
         if self.currentMode == 'login':
             app.loginPage.onMousePress(app, mouseX, mouseY)
+        elif self.currentMode == 'desktop':
+            app.desktop.onMousePress(app, mouseX, mouseY)
+
+    def mouseDrag(self, app, mouseX, mouseY):
+        # mouse drag input to current mode
+        if self.currentMode == 'desktop':
+            app.desktop.windowManager.mouseDrag(app, mouseX, mouseY)

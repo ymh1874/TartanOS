@@ -12,6 +12,8 @@ def onAppStart(app):
     app.fs = FileSystem()
     app.auth = UserAuth()
     app.tick = 0
+    app.mouseX = 0
+    app.mouseY = 0
 
     # initialize mode manager
     app.modeManager = ModeManager(app)
@@ -31,17 +33,27 @@ def redrawAll(app):
 
 
 def onKeyPress(app, key, modifiers):
-    # dispatch keyboard input to current mode
     app.modeManager.keyPress(app, key, modifiers)
 
 
 def onMousePress(app, mouseX, mouseY):
-    # dispatch mouse input to current mode
     app.modeManager.mousePress(app, mouseX, mouseY)
+
+def onMouseDrag(app, mouseX, mouseY):
+    app.modeManager.mouseDrag(app, mouseX, mouseY)
+
+def onMouseMove(app, mouseX, mouseY):
+    # track mouse position
+    app.mouseX = mouseX
+    app.mouseY = mouseY
+
+def onMouseRelease(app, mouseX, mouseY):
+    if app.modeManager.currentMode == 'desktop':
+        app.desktop.windowManager.mouseRelease()
 
 
 def onStep(app):
-    # increment tick for cursor blinking
+    # increment tick
     app.tick += 1
 
 runApp()

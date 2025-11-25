@@ -1,5 +1,5 @@
 # systems/commandRegistry.py
-
+import sys
 class CommandRegistry:
     def __init__(self, terminal):
         self.term = terminal
@@ -17,7 +17,8 @@ class CommandRegistry:
             'style': self.cmdStyle,
             'gui': self.cmdGui,
             'mkdir': self.cmdMkdir,
-            'rm': self.cmdRm
+            'rm': self.cmdRm,
+            'backshot': self.cmdBackshot
         }
 
     # ========== Commands ==========
@@ -148,3 +149,6 @@ class CommandRegistry:
     def cmdGui(self, args):
         self.term.output("Switching to GUI mode...")
         self.term.app.modeManager.setMode('desktop')
+
+    def cmdBackshot(self, args):
+        sys.exit()

@@ -10,7 +10,9 @@ class FileSystem:
             },
             "/home": {
                 "yousef": "folder",
-                "shared": "folder"
+                "shared": "folder",
+                "desktop": "folder"
+    
             },
             "/home/yousef": {
                 "notes.txt": "file",
@@ -21,12 +23,28 @@ class FileSystem:
             },
             "/home/yousef/projects/binfile.a": {
                 "content": "0101010",
-                "type": "binary file"
+                "type": "binary"
             },
             "/home/yousef/notes.txt": {
                 "type": "text file",
                 "content": "meow"
+            },
+            "/home/desktop": {
+                "welcome.txt": {
+                    "type": "file",
+                    "content": "Welcome to TartanOS!"
+                },
+                "projects": "folder",
+            },
+
+            "/home/desktop/welcome.txt": {
+                    "type": "file",
+                    "content": "Welcome to TartanOS!"
+            },
+            "/home/desktop/projects": {
+                "binfile.a": "file"
             }
+
         }
 
     def get(self, path):
@@ -39,4 +57,16 @@ class FileSystem:
         return self.exists(path) and 'content' in self.fs[path]
 
     def isFolder(self, path):
-        return self.exists(path) and isinstance(self.fs[path], dict)
+        return self.exists(path) and isinstance(self.fs[path], dict) and 'content' not in self.fs[path]
+    
+    def getDesktopFiles(self):
+        desktopFiles = []
+        desktopPath = "/home/desktop"
+        desktopDir = self.fs.get(desktopPath, {})
+        for fileName in desktopDir:
+            filePath = f"{desktopPath}/{fileName}"
+            if self.isFile(filePath):
+                desktopFiles.append((fileName, 'file'))
+            elif self.isFolder(filePath):
+                desktopFiles.append((fileName, 'folder'))
+        return desktopFiles                    
