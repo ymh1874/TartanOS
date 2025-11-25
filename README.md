@@ -143,3 +143,13 @@ The project will only use:
 
 ---
 
+## TP2 Update
+
+During TP2, I decided to revert my project structure from the Edex-UI approach back to my original two-stage design (mainly because friends said my older design looked cooler). No other major changes were made.
+
+---
+
+## How to Run!
+
+Make sure cmu_graphics is installed. Then just run **main.py**!
+
