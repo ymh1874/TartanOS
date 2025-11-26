@@ -32,9 +32,7 @@ class Desktop():
         y = startY
 
         self.filesDisplayed = []
-        for file in app.fs.getDesktopFiles():
-            print(file)
-    
+        for file in app.fs.getDesktopFiles():    
             # draw icon (placeholder rectangle for now)
             if file[1] == 'folder':
                 drawImage(self.folderIcon, x, y, width=iconSize, height=iconSize)
@@ -73,6 +71,9 @@ class Desktop():
             if (x <= mouseX <= x + w) and (y <= mouseY <= y + h):
                 self.windowManager.openWindow(file[0], app)
                 print(f"Clicked on {file[0]}")
+    
+    def mouseDrag(self, app, mouseX, mouseY):
+        WindowManager.mouseDragWindow(app, mouseX, mouseY)
                           
 
     

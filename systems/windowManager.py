@@ -99,7 +99,17 @@ class WindowManager:
     def windowClient(self, windowName, name, x, y, width, height):
         # Draw window with center alignment
         drawRect(x, y, width, height, fill='lightGrey', align='center')
-        drawLabel(name, x, y, size=14)
+        drawLabel(name, x, y - height // 2, size= 20)
+
+    def checkDrag(self, mouseX, mouseY):
+        for windowName, windowData in self.windows.items():
+            left, right, top, bottom = self.getWindowBounds(windowData, app)
+            if left <= mouseX <= right and mouseY <= top:
+                return windowName
+            
+    def moveWindow(self, newX, newY, windowName):
+        pass
+                
 
     def mousePress(self, app, mouseX, mouseY):
         # Just recognize corners for now
@@ -116,8 +126,15 @@ class WindowManager:
                     print(f"Corner detected: {windowName} {corner}")
                     return
 
-    def mouseDrag(self, app, mouseX, mouseY):
-        pass
+    def mouseDragWindow(self, app, mouseX, mouseY):
+
+        windowName = self.checkDrag(mouseX, mouseY)
+        newX = mouseX
+        newY = mouseY
+        self.windows[windowName]['xRatio'] = newX
+        self.windows[windowName]['yRatio'] = newY
+
+
     
     def mouseRelease(self):
         pass
