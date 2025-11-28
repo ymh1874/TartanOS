@@ -10,6 +10,7 @@ class Desktop():
         self.terminalOpen = False
         self.filesDisplayed = [] #list of files currently shown on desktop
         self.windowManager = WindowManager(app)
+        self.fontSize = 0.034 * app.height
 
     def draw(self, app):
         # draw desktop background image
@@ -39,7 +40,7 @@ class Desktop():
             elif file[1] == 'file':
                 drawImage(self.fileIcon, x, y, width=iconSize, height=iconSize)
             # draw filename
-            drawLabel(file[0], x + iconSize / 2, y + iconSize + 15, size=12, align='center', fill='black')
+            drawLabel(file[0], x + iconSize / 2, y + iconSize + 15, size=self.fontSize, align='center', fill='black')
 
             # store displayed file info for click detection
             self.filesDisplayed.append((file, x, y, iconSize, iconSize + 15))
@@ -53,6 +54,7 @@ class Desktop():
     
     
     def onKeyPress(self, app, key, modifiers):
+        self.windowManager.onKeyPress(app, key, modifiers)
         # ctrl+t to toggle terminal mode
         if modifiers == ['control'] and key == 't':
             if self.terminalOpen:
@@ -65,15 +67,21 @@ class Desktop():
                 self.app.modeManager.setMode('terminal')
 
     def onMousePress(self, app, mouseX, mouseY):
-        # check if a desktop icon was clicked
+        # First try window manager (resizing, dragging, button clicks)
+        self.windowManager.mousePress(app, mouseX, mouseY)
+        
+        # Finally check if a desktop icon was clicked
         for fileInfo in self.filesDisplayed:
             file, x, y, w, h = fileInfo
             if (x <= mouseX <= x + w) and (y <= mouseY <= y + h):
                 self.windowManager.openWindow(file[0], app)
                 print(f"Clicked on {file[0]}")
-    
-    def mouseDrag(self, app, mouseX, mouseY):
-        WindowManager.mouseDragWindow(app, mouseX, mouseY)
+
+    def onMouseDrag(self, app, mouseX, mouseY):
+        self.windowManager.mouseDragWindow(app, mouseX, mouseY)
+
+    def onMouseRelease(self, app, mouseX, mouseY):
+        self.windowManager.stopDragging()
                           
 
     

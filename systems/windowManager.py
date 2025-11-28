@@ -9,8 +9,25 @@ class WindowManager:
         self.widthRatio = 0.35  # 35% of screen width
         self.heightRatio = 0.4  # 40% of screen height
         self.align = 'center'
-        self.cornerSize = 20
+        self.cornerSize = 10
         self.hoveredCorner = None
+        self.fontSize = 0.045 * app.height
+        self.menuRectSize = 0.05 * app.height
+
+        # Resizing state
+        self.resizingWindow = None
+        self.resizingCorner = None  # which corner is being dragged
+        self.resizeStartMouseX = 0
+        self.resizeStartMouseY = 0
+        self.resizeStartWidth = 0
+        self.resizeStartHeight = 0
+        self.resizeStartCenterX = 0
+        self.resizeStartCenterY = 0
+        
+        # Dragging state
+        self.draggingWindow = None
+        self.dragOffsetX = 0
+        self.dragOffsetY = 0
 
     
     def openWindow(self, window, app):
@@ -29,7 +46,7 @@ class WindowManager:
             del self.windows[window]
 
     def getOpenWindows(self):
-        return self.windows
+        return self.windows 
     
     # Calculate actual dimensions based on app size and ratios
     def getActualDimensions(self, windowData, app):
@@ -39,13 +56,13 @@ class WindowManager:
         h = int(windowData['heightRatio'] * app.height)
         return x, y, w, h
     
-    # Get window bounds (left, right, top, bottom) accounting for center alignment
+    # Get window bounds (left, right, top, bottom) accounting for center alignment and menu bar
     def getWindowBounds(self, windowData, app):
         x, y, w, h = self.getActualDimensions(windowData, app)
         # With center alignment: center is at (x, y)
         left = x - w // 2
         right = x + w // 2
-        top = y - h // 2
+        top = y - h // 2 - self.menuRectSize // 2  # offset by half menu height
         bottom = y + h // 2
         return left, right, top, bottom
     
@@ -89,30 +106,69 @@ class WindowManager:
                     (left, top, 'top-left')
                 ]
                 
-                for cx, cy, cornerName in corners:
+                for x, y, cornerName in corners:
                     # Highlight corner if hovering
                     if self.hoveredCorner and self.hoveredCorner[0] == windowName and self.hoveredCorner[1] == cornerName:
-                        drawRect(cx, cy, self.cornerSize, self.cornerSize, align='center', fill='purple')
+                        drawRect(x, y, self.cornerSize, self.cornerSize, align='center', fill='purple')
                     else:
-                        drawRect(cx, cy, self.cornerSize, self.cornerSize, align='center', fill='grey', opacity=0.5)
+                        drawRect(x, y, self.cornerSize, self.cornerSize, align='center', fill='grey', opacity=0.5)
 
     def windowClient(self, windowName, name, x, y, width, height):
         # Draw window with center alignment
         drawRect(x, y, width, height, fill='lightGrey', align='center')
-        drawLabel(name, x, y - height // 2, size= 20)
+        drawRect(x, y - height // 2, width, self.menuRectSize, fill='darkGrey', align='center')  # title bar
+        
+        drawRect(x + width // 2 - 10, y - height // 2, self.menuRectSize, self.menuRectSize, fill='red', align='center')  # close button
+        drawLabel('X', x + width // 2 - 10, y - height // 2, size=self.fontSize, fill='white', align='center')
+        drawRect(x + width // 2 - 30, y - height // 2, self.menuRectSize, self.menuRectSize, fill='green', align='center')  # maximize button
+        drawLabel('+', x + width // 2 - 30, y - height // 2, size=self.fontSize, fill='white', align='center')
+        drawRect(x + width // 2 - 50, y - height // 2, self.menuRectSize, self.menuRectSize, fill='yellow', align='center')  # minimize button
+        drawLabel('-', x + width // 2 - 50, y - height // 2, size=self.fontSize, fill='black', align='center')
 
-    def checkDrag(self, mouseX, mouseY):
+        drawLabel(name, x - width // 2 , y - height // 2, size=self.fontSize, fill='black', align='left')
+
+    def checkDrag(self, mouseX, mouseY, app):
+        # Check if clicking in title bar of any window
         for windowName, windowData in self.windows.items():
             left, right, top, bottom = self.getWindowBounds(windowData, app)
-            if left <= mouseX <= right and mouseY <= top:
+            # Check if in title bar (top 10% of window height)
+            if left <= mouseX <= right and top <= mouseY <= top + 0.1 * app.height:
                 return windowName
+        return None
             
-    def moveWindow(self, newX, newY, windowName):
-        pass
-                
+    def moveWindow(self, newXRatio, newYRatio, windowName):
+        self.windows[windowName]['xRatio'] = newXRatio
+        self.windows[windowName]['yRatio'] = newYRatio
 
-    def mousePress(self, app, mouseX, mouseY):
-        # Just recognize corners for now
+    def resizeWindow(self, windowName, newWidthRatio, newHeightRatio, newXRatio=None, newYRatio=None):
+        # Minimum size constraints
+        minWidth = 0.15  # 15% of screen width
+        minHeight = 0.15  # 15% of screen height
+        
+        self.windows[windowName]['widthRatio'] = max(minWidth, newWidthRatio)
+        self.windows[windowName]['heightRatio'] = max(minHeight, newHeightRatio)
+        
+        if newXRatio is not None:
+            self.windows[windowName]['xRatio'] = newXRatio
+        if newYRatio is not None:
+            self.windows[windowName]['yRatio'] = newYRatio
+                
+    def startDragging(self, mouseX, mouseY, app):
+        # Check if clicking on a window's title bar
+        windowName = self.checkDrag(mouseX, mouseY, app)
+        if windowName:
+            self.draggingWindow = windowName
+            # Calculate offset from window center to mouse
+            windowData = self.windows[windowName]
+            centerX = windowData['xRatio'] * app.width
+            centerY = windowData['yRatio'] * app.height
+            self.dragOffsetX = mouseX - centerX
+            self.dragOffsetY = mouseY - centerY
+            return True
+        return False
+    
+    def startResizing(self, mouseX, mouseY, app):
+        # Check if clicking on a window corner
         for windowName, windowData in self.windows.items():
             left, right, top, bottom = self.getWindowBounds(windowData, app)
             corners = {
@@ -123,18 +179,142 @@ class WindowManager:
             }
             for corner, (cx, cy) in corners.items():
                 if self.isMouseInCorner(mouseX, mouseY, cx, cy):
-                    print(f"Corner detected: {windowName} {corner}")
-                    return
+                    self.resizingWindow = windowName
+                    self.resizingCorner = corner
+                    
+                    # Store initial state
+                    self.resizeStartMouseX = mouseX
+                    self.resizeStartMouseY = mouseY
+                    
+                    x, y, w, h = self.getActualDimensions(windowData, app)
+                    self.resizeStartWidth = w
+                    self.resizeStartHeight = h
+                    self.resizeStartCenterX = x
+                    self.resizeStartCenterY = y
+                    
+                    print(f"Start resizing: {windowName} {corner}")
+                    return True
+        return False
+
+    def mousePress(self, app, mouseX, mouseY):
+        # Try resizing first (corners have priority)
+        if not self.startResizing(mouseX, mouseY, app):
+            # If not resizing, try dragging
+            self.startDragging(mouseX, mouseY, app)
+        # Check for clicks on window menu buttons
+        for windowName, windowData in self.windows.items():
+            left, right, top, bottom = self.getWindowBounds(windowData, app)
+            # Check if close button clicked
+            if (right - self.menuRectSize <= mouseX <= right) and (top <= mouseY <= top + self.menuRectSize):
+                self.closeWindow(windowName)
+                return
+            # Check if maximize button clicked
+            elif (right - 2 * self.menuRectSize <= mouseX <= right - self.menuRectSize) and (top <= mouseY <= top + self.menuRectSize):
+                # Maximize to full screen
+                self.resizeWindow(windowName, 1.0, 1.0, 0.5, 0.5)
+                return
+            # Check if minimize button clicked
+            elif (right - 3 * self.menuRectSize <= mouseX <= right - 2 * self.menuRectSize) and (top <= mouseY <= top + self.menuRectSize):
+                # Minimize (for simplicity, just close the window)
+                self.closeWindow(windowName)
+                return    
+        
 
     def mouseDragWindow(self, app, mouseX, mouseY):
+        if not self.draggingWindow and not self.resizingWindow:
+            return  # Nothing to do
+        # Handle window dragging
+        if self.draggingWindow and not self.resizingWindow:
+            # Calculate new center position (mouse position - offset)
+            newCenterX = mouseX - self.dragOffsetX
+            newCenterY = mouseY - self.dragOffsetY
+            
+            # Convert to ratios
+            newXRatio = newCenterX / app.width
+            newYRatio = newCenterY / app.height
+            
+            # Clamp to keep window on screen
+            newXRatio = max(0, min(1, newXRatio))
+            newYRatio = max(0, min(1, newYRatio))
+            
+            self.moveWindow(newXRatio, newYRatio, self.draggingWindow)
+        
+        # Handle window resizing
+        elif self.resizingWindow:
+            # Calculate how much the mouse has moved
+            deltaX = mouseX - self.resizeStartMouseX
+            deltaY = mouseY - self.resizeStartMouseY
+            
+            # Calculate new dimensions based on which corner is being dragged
+            if self.resizingCorner == 'bottom-right':
+                # Grow right and down
+                newWidth = self.resizeStartWidth + deltaX
+                newHeight = self.resizeStartHeight + deltaY
+                # Center moves right and down by half the change
+                newCenterX = self.resizeStartCenterX + deltaX / 2
+                newCenterY = self.resizeStartCenterY + deltaY / 2
+                
+            elif self.resizingCorner == 'bottom-left':
+                # Grow left and down
+                newWidth = self.resizeStartWidth - deltaX
+                newHeight = self.resizeStartHeight + deltaY
+                # Center moves left (negative) and down
+                newCenterX = self.resizeStartCenterX + deltaX / 2
+                newCenterY = self.resizeStartCenterY + deltaY / 2
+                
+            elif self.resizingCorner == 'top-right':
+                # Grow right and up
+                newWidth = self.resizeStartWidth + deltaX
+                newHeight = self.resizeStartHeight - deltaY
+                # Center moves right and up (negative)
+                newCenterX = self.resizeStartCenterX + deltaX / 2
+                newCenterY = self.resizeStartCenterY + deltaY / 2
+                
+            elif self.resizingCorner == 'top-left':
+                # Grow left and up
+                newWidth = self.resizeStartWidth - deltaX
+                newHeight = self.resizeStartHeight - deltaY
+                # Center moves left (negative) and up (negative)
+                newCenterX = self.resizeStartCenterX + deltaX / 2
+                newCenterY = self.resizeStartCenterY + deltaY / 2
+            
+            # Convert to ratios
+            newWidthRatio = newWidth / app.width
+            newHeightRatio = newHeight / app.height
+            newXRatio = newCenterX / app.width
+            newYRatio = newCenterY / app.height
+            
+            # Apply the resize
+            self.resizeWindow(
+                self.resizingWindow, 
+                newWidthRatio, 
+                newHeightRatio, 
+                newXRatio, 
+                newYRatio
+            )
 
-        windowName = self.checkDrag(mouseX, mouseY)
-        newX = mouseX
-        newY = mouseY
-        self.windows[windowName]['xRatio'] = newX
-        self.windows[windowName]['yRatio'] = newY
+    def stopDragging(self):
+        self.draggingWindow = None
+        self.dragOffsetX = 0
+        self.dragOffsetY = 0
 
-
+    def stopResizing(self):
+        self.resizingWindow = None
+        self.resizingCorner = None
+        self.resizeStartMouseX = 0
+        self.resizeStartMouseY = 0
+        self.resizeStartWidth = 0
+        self.resizeStartHeight = 0
+        self.resizeStartCenterX = 0
+        self.resizeStartCenterY = 0
+    
+    def closeAllWindows(self):
+        self.windows = {}
     
     def mouseRelease(self):
-        pass
+        self.stopDragging()
+        self.stopResizing()
+
+    def onKeyPress(self, app, key, modifiers):
+        if modifiers == ['control'] and key == 'm':  # Ctrl+M to close all windows
+            self.closeAllWindows()

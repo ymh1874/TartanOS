@@ -18,13 +18,12 @@ def onAppStart(app):
     # initialize mode manager
     app.modeManager = ModeManager(app)
 
-    # initialize UI components
     app.terminal = Terminal(app)
     app.desktop = Desktop(app)
     app.loginPage = LoginPage(app)
 
-    # start at login screen (stage 1)
-    app.modeManager.setMode('login')
+    # start at login screen 
+    app.modeManager.setMode('desktop')
 
 
 def redrawAll(app):

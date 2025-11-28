@@ -12,4 +12,9 @@ class ClientRender:
     def terminalClient(self, x, y, width, height, align):
         self.app.windowManager.windowClient("Terminal", x, y, width, height, align)
 
+    def settingsClient(self, x, y, width, height, align):
+        self.app.windowManager.windowClient("Settings", x, y, width, height, align)
+
+
+
     
