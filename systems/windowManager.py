@@ -141,6 +141,10 @@ class WindowManager:
         self.windows[windowName]['yRatio'] = newYRatio
 
     def resizeWindow(self, windowName, newWidthRatio, newHeightRatio, newXRatio=None, newYRatio=None):
+        # Check if window still exists before resizing
+        if windowName not in self.windows:
+            return
+        
         # Minimum size constraints
         minWidth = 0.15  # 15% of screen width
         minHeight = 0.15  # 15% of screen height
@@ -236,6 +240,10 @@ class WindowManager:
             return  # Nothing to do
         # Handle window dragging
         if self.draggingWindow and not self.resizingWindow:
+            # Check if window still exists
+            if self.draggingWindow not in self.windows:
+                self.stopDragging()
+                return
             # Calculate new center position (mouse position - offset)
             newCenterX = mouseX - self.dragOffsetX
             newCenterY = mouseY - self.dragOffsetY
@@ -252,6 +260,11 @@ class WindowManager:
         
         # Handle window resizing
         elif self.resizingWindow:
+            # Check if window still exists
+            if self.resizingWindow not in self.windows:
+                self.stopResizing()
+                return
+            
             # Calculate how much the mouse has moved
             deltaX = mouseX - self.resizeStartMouseX
             deltaY = mouseY - self.resizeStartMouseY

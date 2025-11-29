@@ -23,7 +23,7 @@ def onAppStart(app):
     app.loginPage = LoginPage(app)
 
     # start at login screen 
-    app.modeManager.setMode('terminal')
+    app.modeManager.setMode('login')
 
 
 def redrawAll(app):
