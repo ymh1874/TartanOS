@@ -1,8 +1,10 @@
 from cmu_graphics import *
-
+from ui.clientRender import ClientRender
 class WindowManager:
     def __init__(self, app):
         self.windows = {}
+        self.app = app
+        self.clientRender = ClientRender(app)
         # Store ratios instead of absolute positions
         self.xRatio = 0.5  # center of screen
         self.yRatio = 0.5  # center of screen
@@ -44,6 +46,8 @@ class WindowManager:
     def closeWindow(self, window):
         if window in self.windows:
             del self.windows[window]
+            # cleanup client resources if needed
+            self.clientRender.closeClient(window)
 
     def getOpenWindows(self):
         return self.windows 
@@ -110,8 +114,7 @@ class WindowManager:
                     # Highlight corner if hovering
                     if self.hoveredCorner and self.hoveredCorner[0] == windowName and self.hoveredCorner[1] == cornerName:
                         drawRect(x, y, self.cornerSize, self.cornerSize, align='center', fill='purple')
-                    else:
-                        drawRect(x, y, self.cornerSize, self.cornerSize, align='center', fill='grey', opacity=0.5)
+                    
 
     def windowClient(self, windowName, name, x, y, width, height):
         # Draw window with center alignment
@@ -124,8 +127,11 @@ class WindowManager:
         drawLabel('+', x + width // 2 - 30, y - height // 2, size=self.fontSize, fill='white', align='center')
         drawRect(x + width // 2 - 50, y - height // 2, self.menuRectSize, self.menuRectSize, fill='yellow', align='center')  # minimize button
         drawLabel('-', x + width // 2 - 50, y - height // 2, size=self.fontSize, fill='black', align='center')
-
         drawLabel(name, x - width // 2 , y - height // 2, size=self.fontSize, fill='black', align='left')
+
+        # render client content through ClientRender
+        self.clientRender.instantClient(windowName, x, y + self.menuRectSize // 2, width, height - self.menuRectSize, 'center')
+            
 
     def checkDrag(self, mouseX, mouseY, app):
         # Check if clicking in title bar of any window
@@ -342,3 +348,9 @@ class WindowManager:
     def onKeyPress(self, app, key, modifiers):
         if modifiers == ['control'] and key == 'm':  # Ctrl+M to close all windows
             self.closeAllWindows()
+    
+    def handleClientKeyPress(self, app, key, modifiers):
+        # route keyboard input to all active window clients
+        for windowName in self.windows:
+            # route to clientRender for keyboard input handling
+            self.clientRender.handleClientKeyPress(windowName, app, key, modifiers)

@@ -7,6 +7,8 @@ class Desktop():
         self.backgroundImage = 'assets/backgrounds/desktopBackground.png'
         self.fileIcon = 'assets/icons/fileIcon.png'
         self.folderIcon = 'assets/icons/folderIcon.png'
+        self.terminalIcon = 'assets/icons/terminalIcon.png'
+        self.textEditorIcon = 'assets/icons/textEditorIcon.png'
         self.terminalOpen = False
         self.filesDisplayed = [] #list of files currently shown on desktop
         self.windowManager = WindowManager(app)
@@ -39,6 +41,11 @@ class Desktop():
                 drawImage(self.folderIcon, x, y, width=iconSize, height=iconSize)
             elif file[1] == 'file':
                 drawImage(self.fileIcon, x, y, width=iconSize, height=iconSize)
+            elif  file[1] == 'executable':
+                if file[0] == 'Terminal':
+                    drawImage(self.terminalIcon, x, y, width=iconSize, height=iconSize)
+                elif file[0] == 'Text Editor': 
+                    drawImage(self.textEditorIcon, x, y, width=iconSize, height=iconSize)
             # draw filename
             drawLabel(file[0], x + iconSize / 2, y + iconSize + 15, size=self.fontSize, align='center', fill='black')
 
@@ -54,6 +61,9 @@ class Desktop():
     
     
     def onKeyPress(self, app, key, modifiers):
+        # route keyboard input to window clients (like Terminal)
+        self.windowManager.handleClientKeyPress(app, key, modifiers)
+        # also handle desktop-level shortcuts
         self.windowManager.onKeyPress(app, key, modifiers)
         # ctrl+t to toggle terminal mode
         if modifiers == ['control'] and key == 't':

@@ -4,17 +4,17 @@ from systems.pathUtils import PathUtils
 from systems.commandRegistry import CommandRegistry
 from core.appModes import ModeManager
 class Terminal:
-    def __init__(self, app):
+    def __init__(self, app, **kwargs):
         # external
         self.app = app
         self.fs = app.fs
         
 
         # terminal bounds (adjust these to resize/reposition the terminal)
-        self.x = 0                    # left edge
-        self.y = 0                    # top edge
-        self.w = app.width            # width (full screen)
-        self.h = app.height           # height (full screen)
+        self.x = kwargs.get('x', 0)                    # left edge
+        self.y = kwargs.get('y', 0)                    # top edge
+        self.w = kwargs.get('width', app.width)        # width (full screen)
+        self.h = kwargs.get('height', app.height)      # height (full screen)
         
         # visual
         self.textColor = 'white'
@@ -165,9 +165,8 @@ class Terminal:
             self.tempInput += key
 
     def draw(self, app):
-        # recalculate all dimensions on each draw to handle window resizes
-        self.w = app.width
-        self.h = app.height
+        # for windowed terminal, use instance dimensions instead of app dimensions
+        # recalculate visual properties based on current bounds
         self.fontSize = max(12, int(self.w * 0.018))
         self.lineSpacing = self.fontSize * 1.3
         self.margin = self.w * 0.015
@@ -185,7 +184,7 @@ class Terminal:
                 font='monospace', align='left')
             y += self.lineSpacing
 
-        # draw login input if logging in
+        # draw terminal input line
         if self.isLoggingIn:
             if self.loginStage == "username":
                 prompt = f"Username: {self.tempInput}"
@@ -193,14 +192,14 @@ class Terminal:
                 prompt = f"Password: {'*' * len(self.tempInput)}"
             drawLabel(prompt, self.x + self.margin, y,
                 size=self.fontSize, fill=self.textColor, font='monospace', align='left')
-            # draw cursor for login
         else:
             # draw terminal input line
-            currentY = self.y + self.margin + len(history) * self.lineSpacing
+            currentY = y
             drawLabel(f"{self.prompt}{self.currLine}", self.x + self.margin, currentY,
                 size=self.fontSize, fill=self.textColor, font='monospace', align='left')
             # draw cursor at correct y
             self.drawCursor(app, currentY, self.index)
+
         
 
     def drawCursor(self, app, y, index):
@@ -359,12 +358,10 @@ class NanoEditor(Terminal):
                 self.index += 1 
     def draw(self, app):
         # recalculate all dimensions on each draw to handle window resizes
-        self.w = self.w
-        self.h = self.h
         self.fontSize = max(12, int(self.w * 0.018))
         self.lineSpacing = self.fontSize * 1.3
         self.margin = self.w * 0.015
-        footerY = self.h - self.margin - self.lineSpacing
+        footerY = self.y + self.h - self.lineSpacing
 
         # draw editor background
         drawRect(self.x, self.y, self.w, self.h, fill=self.backgroundColor)
@@ -382,7 +379,6 @@ class NanoEditor(Terminal):
                     size=self.fontSize, fill=self.textColor, font='monospace', align='left')
                 
         # draw nano footer
-        
         drawRect(self.x, footerY, self.w, self.lineSpacing, fill='grey')
         drawLabel("^O Open  ^S Save  ^Q Quit", self.x + self.margin, footerY + (self.lineSpacing - self.fontSize) / 2,
             size=self.fontSize, fill='red', font='monospace', align='left')

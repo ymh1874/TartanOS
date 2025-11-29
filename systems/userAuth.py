@@ -6,6 +6,9 @@ class UserAuth:
             'yousef': '112',
             'admin': 'root'
         }
-
+        self.loggedInUser = None
     def verify(self, username, password):
-        return self.users.get(username) == password
+        if self.users.get(username) == password:
+            self.loggedInUser = username
+            return True
+        return False

@@ -40,7 +40,17 @@ class FileSystem:
             },
             "/home/desktop": {
                 "type": "folder",
-                "children": ["welcome.txt", "projects"],
+                "children": ["welcome.txt", "projects", "Terminal", "Text Editor"],
+                "permissions": "755"
+            },
+            "/home/desktop/Terminal": {
+                "type": "executable",
+                "content": "",
+                "permissions": "755"
+            },
+            "/home/desktop/Text Editor": {
+                "type": "executable",
+                "content": "",
                 "permissions": "755"
             },
             "/home/desktop/welcome.txt": {
@@ -84,6 +94,10 @@ class FileSystem:
         node = self.fs.get(path)
         return node is not None and node.get("type") == "folder"
     
+    def isExecutable(self, path):
+        node = self.fs.get(path)
+        return node is not None and node.get("type") == "executable"
+    
     def getChildren(self, path):
         # Get list of children for a folder
         node = self.fs.get(path)
@@ -103,6 +117,9 @@ class FileSystem:
                 desktopFiles.append((fileName, 'file'))
             elif self.isFolder(filePath):
                 desktopFiles.append((fileName, 'folder'))
+            elif self.isExecutable(filePath):
+                desktopFiles.append((fileName, 'executable'))
+
         return desktopFiles
     
     def createFile(self, path, content=""):
