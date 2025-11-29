@@ -44,14 +44,6 @@ class ModeManager:
             if app.terminal.nanoEditor:
                 app.terminal.nanoEditor.onKeyPress(app, key, modifiers)
 
-    def keyHold(self, app, key, modifiers):
-        # keyboard hold input to current mode
-        if self.currentMode == 'terminal':
-            app.terminal.onKeyHold(app, key, modifiers)
-        elif self.currentMode == 'nano':
-            if app.terminal.nanoEditor:
-                app.terminal.nanoEditor.onKeyHold(app, key, modifiers)
-
     def mousePress(self, app, mouseX, mouseY):
         #  mouse input to current mode
         if self.currentMode == 'login':

@@ -23,7 +23,7 @@ def onAppStart(app):
     app.loginPage = LoginPage(app)
 
     # start at login screen 
-    app.modeManager.setMode('login')
+    app.modeManager.setMode('terminal')
 
 
 def redrawAll(app):
@@ -33,9 +33,6 @@ def redrawAll(app):
 
 def onKeyPress(app, key, modifiers):
     app.modeManager.keyPress(app, key, modifiers)
-
-def onKeyHold(app, key, modifiers):
-    app.modeManager.keyHold(app, key, modifiers)
 
 
 def onMousePress(app, mouseX, mouseY):

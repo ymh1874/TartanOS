@@ -127,6 +127,10 @@ class Terminal:
             if self.index > 0:
                 self.currLine = self.currLine[:self.index - 1] + self.currLine[self.index:]
                 self.index -= 1
+        elif key == 'delete':
+            # only delete if not at end of line
+            if self.index < len(self.currLine):
+                self.currLine = self.currLine[:self.index] + self.currLine[self.index + 1:]
         
         elif key == 'space':
             self.currLine = self.currLine[:self.index] + ' ' + self.currLine[self.index:]
@@ -145,35 +149,10 @@ class Terminal:
         elif key == 'right':
             self.index = min(len(self.currLine), self.index + 1)
         elif isinstance(key, str) and len(key) == 1:
+            # clamp index to valid range before inserting
+            self.index = max(0, min(self.index, len(self.currLine)))
             self.currLine = self.currLine[:self.index] + key + self.currLine[self.index:]
             self.index += 1
-
-    def onKeyHold(self, app, key, modifiers):
-        # handle held keys for continuous input
-        if self.isLoggingIn:
-            return  # no key hold actions during login
-
-        if key == "backspace":
-            if self.currLine:
-                self.currLine = self.currLine[:-1]
-        elif key == 'delete':
-            if self.index < len(self.currLine):
-                self.currLine = self.currLine[:self.index] + self.currLine[self.index + 1:]
-        elif key == 'left':
-            self.index = max(0, self.index - 1)
-        elif key == 'right':
-            self.index = min(len(self.currLine), self.index + 1)
-        elif isinstance(key, str) and len(key) == 1:
-            self.currLine = self.currLine[:self.index] + key + self.currLine[self.index:]
-            self.index += 1
-        elif key == 'up':
-            if self.upTick > 0:
-                self.upTick -= 1
-                self.currLine = self.pastLines[self.upTick]
-        elif key == 'down':
-            if self.upTick < len(self.pastLines) - 1:
-                self.upTick += 1
-                self.currLine = self.pastLines[self.upTick]
 
     def handleLoginInput(self, key):
         # handle input during login stage
@@ -246,7 +225,10 @@ class Terminal:
                 letter = self.currLine[index]
             except IndexError:
                 letter = ' '
-            drawLabel(letter, cursorX, 1.05 * cursorY , size=self.fontSize, fill='purple', font='monospace', align='left')
+            # display letter at exact cursor position
+            letterX = cursorX + (self.fontSize * 0.45) / 2
+            letterY = cursorY + (self.fontSize) / 2
+            drawLabel(letter, letterX, letterY, size=self.fontSize, fill='purple', font='monospace', align='center')
 
 
 
@@ -284,34 +266,6 @@ class NanoEditor(Terminal):
                 "type": "text file",
                 "content": content
             }
-    def onKeyHold(self, app, key, modifiers):
-        if key == "backspace":
-            if self.textLines:
-                lastLine = self.textLines[-1]
-                if lastLine:
-                    self.textLines[-1] = lastLine[:-1]
-                else:
-                    self.textLines.pop()
-        elif key == 'delete':
-            if self.textLines:
-                lastLine = self.textLines[-1]
-                if lastLine:
-                    self.textLines[-1] = lastLine[:-1]
-                else:
-                    self.textLines.pop()
-        elif key == 'left':
-            self.index = max(0, self.index - 1)
-        elif key == 'right':
-            self.index = min(len(self.currLine), self.index + 1)
-        elif key == 'up':
-            if self.upTick > 0:
-                self.upTick -= 1
-                self.currLine = self.pastLines[self.upTick]
-        elif key == 'down':
-            if self.upTick < len(self.pastLines) - 1:
-                self.upTick += 1
-                self.currLine = self.pastLines[self.upTick]
-        
 
     def onKeyPress(self, app, key, modifiers):
         # if in open mode, wait for file path input
@@ -410,18 +364,25 @@ class NanoEditor(Terminal):
         self.fontSize = max(12, int(self.w * 0.018))
         self.lineSpacing = self.fontSize * 1.3
         self.margin = self.w * 0.015
+        footerY = self.h - self.margin - self.lineSpacing
 
         # draw editor background
         drawRect(self.x, self.y, self.w, self.h, fill=self.backgroundColor)
+
+        # compute how many lines fit and draw history using indexY for scrolling
+        availableLines = int((self.h - 2 * self.margin - self.lineSpacing) // self.lineSpacing)
+        startLine = max(0, self.indexY - availableLines + 1)
+        history = self.textLines[startLine:startLine + availableLines]
+
         
         # draw nano editor interface
-        for i, line in enumerate(self.textLines):
+        for i, line in enumerate(history):
             if i * self.lineSpacing + self.margin < self.h - self.margin - self.lineSpacing:
                 drawLabel(line, self.x + self.margin, self.y + self.margin + i * self.lineSpacing,
                     size=self.fontSize, fill=self.textColor, font='monospace', align='left')
                 
         # draw nano footer
-        footerY = self.h - self.margin - self.lineSpacing
+        
         drawRect(self.x, footerY, self.w, self.lineSpacing, fill='grey')
         drawLabel("^O Open  ^S Save  ^Q Quit", self.x + self.margin, footerY + (self.lineSpacing - self.fontSize) / 2,
             size=self.fontSize, fill='red', font='monospace', align='left')
@@ -453,6 +414,9 @@ class NanoEditor(Terminal):
                 letter = currentLine[self.index]
             except IndexError:
                 letter = ' '
-            drawLabel(letter, cursorX, cursorY + (self.lineSpacing - self.fontSize) / 2 + 2 * self.cursorCalibration, size=self.fontSize, fill='purple', font='monospace', align='left')
+            # display letter at exact cursor position
+            letterX = cursorX + (self.fontSize * 0.45) / 2
+            letterY = cursorY + (self.fontSize) / 2
+            drawLabel(letter, letterX, letterY, size=self.fontSize, fill='purple', font='monospace', align='center')
 
 
