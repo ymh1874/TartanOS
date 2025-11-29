@@ -18,15 +18,40 @@ class CommandRegistry:
             'gui': self.cmdGui,
             'mkdir': self.cmdMkdir,
             'rm': self.cmdRm,
-            'backshot': self.cmdBackshot
+            'backshot': self.cmdBackshot,
+            'tartano': self.cmdNano
         }
 
-    # ========== Commands ==========
+    # ===== Commands =====
+    def cmdNano(self, args):
+        # Open file editor
+        if not args:
+            self.term.output("usage: tartano <filename>")
+            return
 
+        name = args[0].lower()
+        path = self.term.resolvePath(name)
+
+        if not self.term.fs.exists(path):
+            self.term.output("file not found")
+            return
+
+        if not self.term.fs.isFile(path):
+            self.term.output("not a file")
+            return
+
+        self.term.output(f"Opening nano editor for {name}...")
+        self.term.app.modeManager.setMode('nano', filePath=path)
     def cmdLs(self, args):
-        self.term.output(' '.join(self.term.currFiles))
+        # List files in current directory
+        children = self.term.fs.getChildren(self.term.currPath)
+        if children:
+            self.term.output(' '.join(children))
+        else:
+            self.term.output("")
 
     def cmdCat(self, args):
+        # Display file contents
         if not args:
             self.term.output("usage: cat <filename>")
             return
@@ -38,12 +63,13 @@ class CommandRegistry:
             self.term.output("file not found")
             return
 
-        node = self.term.fs.get(path)
-        if "content" not in node:
+        if not self.term.fs.isFile(path):
             self.term.output("not a file")
             return
 
-        for line in node["content"].splitlines():
+        node = self.term.fs.get(path)
+        content = node.get("content", "")
+        for line in content.splitlines():
             self.term.output(line)
 
     def cmdClear(self, args):
@@ -60,6 +86,7 @@ class CommandRegistry:
         self.term.output("TartanOS v1.0")
 
     def cmdTouch(self, args):
+        # Create a new empty file
         if not args:
             self.term.output("usage: touch <filename>")
             return
@@ -67,15 +94,15 @@ class CommandRegistry:
         name = args[0].lower()
         path = self.term.resolvePath(name)
 
-        if path in self.term.fs.fs:
+        if self.term.fs.exists(path):
             self.term.output("already exists")
             return
 
-        self.term.fs.fs[path] = {"content": ""}
-        self.term.currFiles[name] = "file"
+        self.term.fs.createFile(path, "")
         self.term.output(f"created {name}")
 
     def cmdMkdir(self, args):
+        # Create a new folder
         if not args:
             self.term.output("usage: mkdir <foldername>")
             return
@@ -83,15 +110,15 @@ class CommandRegistry:
         name = args[0].lower()
         path = self.term.resolvePath(name)
 
-        if path in self.term.fs.fs:
+        if self.term.fs.exists(path):
             self.term.output("already exists")
             return
 
-        self.term.fs.fs[path] = {}
-        self.term.currFiles[name] = "folder"
+        self.term.fs.createFolder(path)
         self.term.output(f"created folder {name}")
 
     def cmdRm(self, args):
+        # Remove a file or folder
         if not args:
             self.term.output("usage: rm <filename/foldername>")
             return
@@ -103,13 +130,11 @@ class CommandRegistry:
             self.term.output("no such file or folder")
             return
 
-        # remove from parent directory listing
-        del self.term.currFiles[name]
-        # remove from filesystem
-        del self.term.fs.fs[path]
+        self.term.fs.deleteFile(path)
         self.term.output(f"removed {name}")
 
     def cmdCd(self, args):
+        # Change directory
         if not args:
             self.term.output("usage: cd <folder>")
             return
@@ -120,7 +145,6 @@ class CommandRegistry:
             if parentPath == "":
                 parentPath = "/"
             self.term.currPath = parentPath
-            self.term.currFiles = self.term.fs.get(self.term.currPath)
             return
         target = args[0].lower()
         newPath = self.term.resolvePath(target)
@@ -129,12 +153,11 @@ class CommandRegistry:
             self.term.output("no such directory")
             return
 
-        if not isinstance(self.term.fs.get(newPath), dict):
+        if not self.term.fs.isFolder(newPath):
             self.term.output("not a folder")
             return
 
         self.term.currPath = newPath
-        self.term.currFiles = self.term.fs.get(newPath)
 
     def cmdPwn(self, args):
         self.term.output(self.term.currPath)

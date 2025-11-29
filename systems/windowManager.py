@@ -195,12 +195,23 @@ class WindowManager:
                     print(f"Start resizing: {windowName} {corner}")
                     return True
         return False
+    
+    def pushWindowToFront(self, mouseX, mouseY, app):
+        # Push the clicked window to the front of the z-order
+        for windowName, windowData in self.windows.items():
+            left, right, top, bottom = self.getWindowBounds(windowData, app)
+            if left <= mouseX <= right and top <= mouseY <= bottom:
+                # Reinsert the window to the end of the dict to bring it to front
+                self.windows[windowName] = self.windows.pop(windowName)
+                return
 
     def mousePress(self, app, mouseX, mouseY):
+        self.pushWindowToFront(mouseX, mouseY, app)
         # Try resizing first (corners have priority)
         if not self.startResizing(mouseX, mouseY, app):
             # If not resizing, try dragging
             self.startDragging(mouseX, mouseY, app)
+        # push window to front
         # Check for clicks on window menu buttons
         for windowName, windowData in self.windows.items():
             left, right, top, bottom = self.getWindowBounds(windowData, app)

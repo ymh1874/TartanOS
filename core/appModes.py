@@ -5,18 +5,26 @@ class ModeManager:
         self.app = app
         self.currentMode = None
 
-    def setMode(self, modeName):
-        # set current mode: 'login', 'desktop', or 'terminal'
+    def setMode(self, modeName, **kwargs):
+        # set current mode: 'login', 'desktop', 'nano', 'terminal'
         self.currentMode = modeName
+        
+        # initialize nanoEditor if switching to nano mode
+        if modeName == 'nano' and 'filePath' in kwargs:
+            from ui.terminal.terminal import NanoEditor
+            self.app.terminal.nanoEditor = NanoEditor(kwargs['filePath'], self.app)
 
-    def redraw(self, app):
+    def redraw(self, app, **kwargs):
         # render appropriate UI based on current mode
         if self.currentMode == 'login':
             app.loginPage.draw(app)
         elif self.currentMode == 'desktop':
             app.desktop.draw(app)
         elif self.currentMode == 'terminal':
-            app.terminal.draw(app)
+            app.terminal.draw(app, **kwargs)
+        elif self.currentMode == 'nano':
+            if app.terminal.nanoEditor:
+                app.terminal.nanoEditor.draw(app, **kwargs)
 
     def keyPress(self, app, key, modifiers):
         #  keyboard input to current mode
@@ -32,6 +40,17 @@ class ModeManager:
                 self.setMode('desktop')
             else:
                 app.terminal.onKeyPress(app, key, modifiers)
+        elif self.currentMode == 'nano':
+            if app.terminal.nanoEditor:
+                app.terminal.nanoEditor.onKeyPress(app, key, modifiers)
+
+    def keyHold(self, app, key, modifiers):
+        # keyboard hold input to current mode
+        if self.currentMode == 'terminal':
+            app.terminal.onKeyHold(app, key, modifiers)
+        elif self.currentMode == 'nano':
+            if app.terminal.nanoEditor:
+                app.terminal.nanoEditor.onKeyHold(app, key, modifiers)
 
     def mousePress(self, app, mouseX, mouseY):
         #  mouse input to current mode
