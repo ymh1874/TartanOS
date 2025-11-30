@@ -220,4 +220,5 @@ class CommandRegistry:
         self.app.modeManager.setMode('desktop')
 
     def cmdBackshot(self, term, args):
+        term.output("Bye Bye...")
         sys.exit()

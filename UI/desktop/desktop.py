@@ -11,6 +11,7 @@ class Desktop():
         self.folderIcon = 'assets/icons/folderIcon.png'
         self.terminalIcon = 'assets/icons/terminalIcon.png'
         self.textEditorIcon = 'assets/icons/textEditorIcon.png'
+        self.fileExplorerIcon = 'assets/icons/fileExplorerIcon.png'
         self.terminalOpen = False
         self.filesDisplayed = [] #list of files currently shown on desktop
         self.windowManager = app.windowManager
@@ -28,6 +29,7 @@ class Desktop():
         self.drawFiles(app)
         app.windowManager.drawWindows(app, app.mouseX, app.mouseY)
         self.drawClockDate(app)
+        app.windowManager.drawMinimizedBar(app)
 
     def drawFiles(self, app):
         # draw desktop icons for files and folders
@@ -52,7 +54,7 @@ class Desktop():
                 elif file[0] == 'Tartano': 
                     drawImage(self.textEditorIcon, x, y, width=iconSize, height=iconSize)
                 elif file[0] == 'File Explorer':
-                    drawImage(self.folderIcon, x, y, width=iconSize, height=iconSize)
+                    drawImage(self.fileExplorerIcon, x, y, width=iconSize, height=iconSize)
             # draw filename
             drawLabel(file[0], x + iconSize / 2, y + iconSize + 15, size=self.fontSize, align='center', fill='black')
 

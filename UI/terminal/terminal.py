@@ -19,7 +19,7 @@ class Terminal:
         self.index = 0  # cursor position in current line
 
         # small pixel calibration for caret vertical position (positive moves cursor down)
-        self.cursorCalibration = -15
+        self.cursorCalibration = -17
 
         # terminal state
         self.username = "user"
@@ -205,14 +205,14 @@ class Terminal:
     def drawCursor(self, app, y, index):
         # clamp index to current line length
         index = max(0, min(index, len(self.currLine)))
-        textToMeasure = self.currLine[:index]        
+        textToMeasure = self.prompt + self.currLine[:index]        
 
         # show cursor half the time
         if self.app.tick % 72 > 36:
             # Use monospace character width: approximately 0.6 * fontSize for each char
             # This is more consistent than 0.55
             charWidth = self.fontSize * 0.6
-            cursorX = self.x + self.margin + len(textToMeasure) * charWidth
+            cursorX = self.x + self.margin + len(textToMeasure) * charWidth  
             
             # align cursor vertically with the label's Y
             cursorY = y + (self.lineSpacing - self.fontSize) / 2 + self.cursorCalibration

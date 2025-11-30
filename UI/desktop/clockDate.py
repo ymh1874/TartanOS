@@ -9,31 +9,28 @@ class ClockDate:
         self.width = width
         self.height = height
         self.background = "assets/backgrounds/clockDate.png"
-        self.fontSize = 0.02 * app.height
+        self.fontSize = min(0.01 * app.height, 0.01 * app.width)
 
     def draw(self, app):
         # Update sizes dynamically for responsiveness
-        self.fontSize = min(0.04 * app.height, 0.04 * app.width)
+        self.fontSize = min(0.025 * app.height, 0.025 * app.width)
 
         # Resize the background image proportionally
-        bgWidth = app.width * 0.25
-        bgHeight = app.height * 0.15
+        bgWidth = app.width 
+        bgHeight = app.height * 0.02
 
-        # Bottom-right anchor
-        padding = 0
-        bgX = app.width - bgWidth - padding
-        bgY = app.height - bgHeight - padding
-
+        # top right corner 
+        bgX = app.width - bgWidth
+        bgY = 0 
         # Draw background
         drawImage(self.background, bgX, bgY, width=bgWidth, height=bgHeight)
 
         # Calculate text positions inside the background
         timeX = bgX + bgWidth - 15
         timeY = bgY + bgHeight * 0.45
-
-        dateX = timeX
-        dateY = bgY + bgHeight * 0.72
-
+        # date before time
+        dateX = timeX - bgWidth * 0.35
+        dateY = timeY
         # Draw time
         now = datetime.now()
         timeStr = now.strftime("%I:%M %p").lstrip("0")

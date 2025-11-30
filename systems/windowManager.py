@@ -16,6 +16,7 @@ class WindowManager:
         self.currWindow = None  # currently focused window
         self.mouseOnWindow = False
         self.orderWindow = [] # current windows in order
+        self.minimizedWindows = []  # list of minimized windows
 
         # Resizing state
         self.resizingWindow = None
@@ -43,8 +44,7 @@ class WindowManager:
             'heightRatio': self.heightRatio, 
             'align': self.align
         }
-        if window not in self.orderWindow:
-            self.orderWindow.append(window)
+        self.orderWindow.append(window)
         self.currWindow = window  # set as current focused window
 
     def closeWindow(self, window):
@@ -52,14 +52,18 @@ class WindowManager:
             del self.windows[window]
             # cleanup client resources if needed
             self.app.clientRender.closeClient(window)
-        if window in self.orderWindow:
-            self.orderWindow.remove(window)
-        if self.currWindow == window:
-            self.currWindow = self.orderWindow[-1] if self.orderWindow else None
 
     def getOpenWindows(self):
         return self.windows 
     
+    def minimizeWindow(self, window):
+        self.minimizedWindows.append(window)
+        self.closeWindow(window)
+        
+    def restoreWindow(self, window, app):
+        if window in self.minimizedWindows:
+            self.openWindow(window, app)
+            self.minimizedWindows.remove(window)
     # Calculate actual dimensions based on app size and ratios
     def getActualDimensions(self, windowData, app):
         x = int(windowData['xRatio'] * app.width)
@@ -122,6 +126,18 @@ class WindowManager:
                     # Highlight corner if hovering
                     if self.hoveredCorner and self.hoveredCorner[0] == windowName and self.hoveredCorner[1] == cornerName:
                         drawRect(x, y, self.cornerSize, self.cornerSize, align='center', fill='purple')
+
+    def drawMinimizedBar(self, app):
+        # Draw minimized windows bar
+        for index, minWin in enumerate(self.minimizedWindows):
+            # align on top left on clock date bar
+            x = index * 150
+            y = 0
+            width = 140
+            height = app.height * 0.02
+            drawRect(x, y, width, height, fill='darkGrey', align='left')
+            drawLabel(f"[{index+1}] {minWin}", x + width // 2, y + height // 2, size=self.fontSize, align='center', fill='white')
+            print(f"Drawing minimized window: {minWin} at ({x}, {y})")
                     
 
     def windowClient(self, windowName, name, x, y, width, height):
@@ -215,12 +231,8 @@ class WindowManager:
         return False
     
     def pushWindowToFront(self, mouseX, mouseY, app):
-        # push the licked window to the front
-        for window in list(self.orderWindow):
-            if window not in self.windows:
-                
-                self.orderWindow.remove(window)
-                continue
+        # Push the clicked window to the front of the z-order
+        for window in self.windows:
             windowData = self.windows[window]
             left, right, top, bottom = self.getWindowBounds(windowData, app)
             if left <= mouseX <= right and top <= mouseY <= bottom:
@@ -228,8 +240,6 @@ class WindowManager:
                 if window == self.currWindow:
                     return  # already front
                 self.windows[window] = self.windows.pop(window)
-                self.orderWindow.remove(window)
-                self.orderWindow.append(window)
                 self.currWindow = window
                 return
 
@@ -255,7 +265,16 @@ class WindowManager:
             # Check if minimize button clicked
             elif (right - 3 * self.menuRectSize <= mouseX <= right - 2 * self.menuRectSize) and (top <= mouseY <= top + self.menuRectSize):
                 # Minimize (for simplicity, just close the window)
-                self.closeWindow(windowName)
+                self.minimizeWindow(windowName)
+                return
+        for minWin in self.minimizedWindows:
+            # align on top left on clock date bar
+            x = self.minimizedWindows.index(minWin) * 150
+            y = 0
+            width = 140
+            height = app.height * 0.02
+            if (x <= mouseX <= x + width) and (y <= mouseY <= y + height):
+                self.restoreWindow(minWin, app)
                 return
         
         # Route mouse press to current active window's client
@@ -362,7 +381,6 @@ class WindowManager:
     
     def closeAllWindows(self):
         self.windows = {}
-        self.orderWindow = []
     
     def mouseRelease(self):
         self.stopDragging()
