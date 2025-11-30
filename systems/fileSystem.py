@@ -40,7 +40,7 @@ class FileSystem:
             },
             "/home/desktop": {
                 "type": "folder",
-                "children": ["welcome.txt", "projects", "Terminal", "Text Editor"],
+                "children": ["welcome.txt", "projects", "Terminal", "Tartano"],
                 "permissions": "755"
             },
             "/home/desktop/Terminal": {
@@ -48,7 +48,7 @@ class FileSystem:
                 "content": "",
                 "permissions": "755"
             },
-            "/home/desktop/Text Editor": {
+            "/home/desktop/Tartano": {
                 "type": "executable",
                 "content": "",
                 "permissions": "755"
@@ -85,6 +85,13 @@ class FileSystem:
 
     def exists(self, path):
         return path in self.fs
+    
+    def moveFile(self, oldPath, newPath):
+        #not working yet
+        if oldPath in self.fs and newPath not in self.fs:
+            self.fs[newPath] = self.fs.pop(oldPath)
+            self.updateParentChildren(oldPath, add=False)
+            self.updateParentChildren(newPath, add=True)
 
     def isFile(self, path):
         node = self.fs.get(path)

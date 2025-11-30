@@ -1,5 +1,4 @@
 from cmu_graphics import *
-from systems.windowManager import WindowManager
 class Desktop():
     def __init__(self, app):
         self.app = app
@@ -11,7 +10,7 @@ class Desktop():
         self.textEditorIcon = 'assets/icons/textEditorIcon.png'
         self.terminalOpen = False
         self.filesDisplayed = [] #list of files currently shown on desktop
-        self.windowManager = WindowManager(app)
+        self.windowManager = app.windowManager
         self.fontSize = 0.034 * app.height
 
     def draw(self, app):
@@ -22,7 +21,7 @@ class Desktop():
             # fallback to solid color if image not found
             drawRect(0, 0, app.width, app.height, fill=self.bgColor)
         self.drawFiles(app)
-        self.windowManager.drawWindows(app, app.mouseX, app.mouseY)
+        app.windowManager.drawWindows(app, app.mouseX, app.mouseY)
 
     def drawFiles(self, app):
         # draw desktop icons for files and folders
@@ -44,7 +43,7 @@ class Desktop():
             elif  file[1] == 'executable':
                 if file[0] == 'Terminal':
                     drawImage(self.terminalIcon, x, y, width=iconSize, height=iconSize)
-                elif file[0] == 'Text Editor': 
+                elif file[0] == 'Tartano': 
                     drawImage(self.textEditorIcon, x, y, width=iconSize, height=iconSize)
             # draw filename
             drawLabel(file[0], x + iconSize / 2, y + iconSize + 15, size=self.fontSize, align='center', fill='black')
@@ -59,12 +58,19 @@ class Desktop():
                 y += iconSize + padding + 15
             
     
-    
+    def checkWindowHover(self, mouseX, mouseY):
+        # Check if mouse is over any window
+        self.mouseOnWindow = False
+        for windowName, windowData in app.windowManager.windows.items():
+            left, right, top, bottom = app.windowManager.getWindowBounds(windowData, app)
+            if left <= mouseX <= right and top <= mouseY <= bottom:
+                return True
+            
     def onKeyPress(self, app, key, modifiers):
         # route keyboard input to window clients (like Terminal)
-        self.windowManager.handleClientKeyPress(app, key, modifiers)
+        app.windowManager.handleClientKeyPress(app, key, modifiers)
         # also handle desktop-level shortcuts
-        self.windowManager.onKeyPress(app, key, modifiers)
+        app.windowManager.onKeyPress(app, key, modifiers)
         # ctrl+t to toggle terminal mode
         if modifiers == ['control'] and key == 't':
             if self.terminalOpen:
@@ -78,20 +84,24 @@ class Desktop():
 
     def onMousePress(self, app, mouseX, mouseY):
         # First try window manager (resizing, dragging, button clicks)
-        self.windowManager.mousePress(app, mouseX, mouseY)
+        app.windowManager.mousePress(app, mouseX, mouseY)
         
         # Finally check if a desktop icon was clicked
         for fileInfo in self.filesDisplayed:
             file, x, y, w, h = fileInfo
             if (x <= mouseX <= x + w) and (y <= mouseY <= y + h):
+                if self.checkWindowHover(mouseX, mouseY):
+                    # don't open file if clicking on a window
+                    return
                 self.windowManager.openWindow(file[0], app)
                 print(f"Clicked on {file[0]}")
 
     def onMouseDrag(self, app, mouseX, mouseY):
-        self.windowManager.mouseDragWindow(app, mouseX, mouseY)
+        app.windowManager.mouseDragWindow(app, mouseX, mouseY)
 
     def onMouseRelease(self, app, mouseX, mouseY):
-        self.windowManager.stopDragging()
+        app.windowManager.stopDragging()
                           
-
+    def onMouseMove(self, app, mouseX, mouseY):
+        pass
     

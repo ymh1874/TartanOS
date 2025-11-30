@@ -55,3 +55,8 @@ class ModeManager:
         # mouse drag input to current mode
         if self.currentMode == 'desktop':
             app.desktop.windowManager.mouseDragWindow(app, mouseX, mouseY)
+    
+    def mouseMove(self, app, mouseX, mouseY):
+        # mouse move input to current mode
+        if self.currentMode == 'desktop':
+            app.desktop.onMouseMove(app, mouseX, mouseY)

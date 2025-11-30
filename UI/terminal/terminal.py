@@ -1,14 +1,8 @@
 # ui/terminal/terminal.py
 from cmu_graphics import *
-from systems.pathUtils import PathUtils
-from systems.commandRegistry import CommandRegistry
-from core.appModes import ModeManager
 class Terminal:
     def __init__(self, app, **kwargs):
-        # external
         self.app = app
-        self.fs = app.fs
-        
 
         # terminal bounds (adjust these to resize/reposition the terminal)
         self.x = kwargs.get('x', 0)                    # left edge
@@ -25,7 +19,7 @@ class Terminal:
         self.index = 0  # cursor position in current line
 
         # small pixel calibration for caret vertical position (positive moves cursor down)
-        self.cursorCalibration = -17
+        self.cursorCalibration = -10
 
         # terminal state
         self.username = "user"
@@ -39,12 +33,18 @@ class Terminal:
         self.maxLines = 200
 
         # command system
-        self.commands = CommandRegistry(self)
+        self.commands = app.cmdRegistry
+        self.pathUtils = app.pathUtils
         
         # nano editor instance (initialized lazily when needed)
         self.nanoEditor = None
         # login stage - tracks if we're logging in or using terminal
-        self.isLoggingIn = True
+        # check if user is already logged in via auth system
+        if app.auth.loggedInUser:
+            self.isLoggingIn = False
+            self.username = app.auth.loggedInUser
+        else:
+            self.isLoggingIn = True
         self.loginStage = "username"  # "username" or "password"
         self.tempUsername = ""
         self.tempPassword = ""
@@ -84,7 +84,7 @@ class Terminal:
     def resolvePath(self, name):
         if name.startswith('/'):
             return name
-        return PathUtils.join(self.currPath, name)
+        return self.app.pathUtils.join(self.currPath, name)
 
     # Output
     def output(self, text, args = None):
@@ -115,7 +115,7 @@ class Terminal:
                 name = cmd.split()[0]
                 handler = self.commands.commands.get(name)
                 if handler:
-                    handler(cmd.split()[1:])
+                    handler(self, cmd.split()[1:])
                 else:
                     self.output(f'command not found: {name}')
 
@@ -203,6 +203,9 @@ class Terminal:
         
 
     def drawCursor(self, app, y, index):
+        # clamp index to current line length
+        index = max(0, min(index, len(self.currLine)))
+        
         # blinking cursor using app.tick as frame counter
         if self.isLoggingIn:
             # login mode cursor
@@ -212,17 +215,23 @@ class Terminal:
                 textToMeasure = f"Password: {'*' * len(self.tempInput)}"
         else:  
             # terminal mode cursor
-            textToMeasure =  self.prompt + self.currLine[:self.index] 
+            textToMeasure =  self.prompt + self.currLine[:index] 
 
         # show cursor half the time
-        if app.tick % 72 > 36:
-            cursorX = self.x + self.margin + len(textToMeasure) * (self.fontSize * 0.6) 
+        if self.app.tick % 72 > 36:
+            # Use monospace character width: approximately 0.6 * fontSize for each char
+            # This is more consistent than 0.55
+            charWidth = self.fontSize * 0.6
+            cursorX = self.x + self.margin + len(textToMeasure) * charWidth
+            
             # align cursor vertically with the label's Y
             cursorY = y + (self.lineSpacing - self.fontSize) / 2 + self.cursorCalibration
             drawRect(cursorX, cursorY, self.fontSize * 0.45, self.fontSize, fill='white')
-            try : 
+            
+            # only draw letter if index is within bounds
+            if index < len(self.currLine):
                 letter = self.currLine[index]
-            except IndexError:
+            else:
                 letter = ' '
             # display letter at exact cursor position
             letterX = cursorX + (self.fontSize * 0.45) / 2
@@ -246,22 +255,22 @@ class NanoEditor(Terminal):
     def loadFile(self, path=None):
         if path is not None:
             self.filePath = path
-        if self.fs.exists(self.filePath):
-            node = self.fs.get(self.filePath)
+        if self.app.fs.exists(self.filePath):
+            node = self.app.fs.get(self.filePath)
             if "content" in node:
                 self.textLines = node["content"].splitlines()
             else:
-                self.textLines = []
+                self.textLines = ["<empty file>"]
         else:
-            self.textLines = []
+            self.textLines = ["<empty file>"]
 
     def saveFile(self):
         content = "\n".join(self.textLines)
-        if self.fs.exists(self.filePath):
-            node = self.fs.get(self.filePath)
+        if self.app.fs.exists(self.filePath):
+            node = self.app.fs.get(self.filePath)
             node["content"] = content
         else:
-            self.fs.fs[self.filePath] = {
+            self.app.fs.fs[self.filePath] = {
                 "type": "text file",
                 "content": content
             }
@@ -272,10 +281,22 @@ class NanoEditor(Terminal):
             if key == 'enter':
                 path = self.currLine.strip()
                 if path:
-                    self.loadFile(path)
-                    self.output(f"Opened {path}")
-                self.openMode = False
-                self.currLine = ""
+                    # check if file exists
+                    if self.app.fs.exists(path):
+                        self.loadFile(path)
+                        self.output(f"Opened {path}")
+                        self.output(f'')
+                        self.openMode = False
+                    else:
+                        # file doesn't exist, ask for path again
+                        self.output(f"File not found: {path}")
+                        self.output("Type file path to open:")
+                        self.currLine = ""
+                        self.index = 0
+                    return
+                else:
+                    self.output("Please enter a file path:")
+                    return
             elif key == 'backspace':
                 self.currLine = self.currLine[:-1]
             elif isinstance(key, str) and len(key) == 1:
@@ -286,6 +307,9 @@ class NanoEditor(Terminal):
         if key == "s" and 'control' in modifiers:
             self.saveFile()
             self.textLines = []
+            self.output("Enter file name to save:")
+            
+            
             self.output("File saved.")
             return
         elif key == "q" and 'control' in modifiers:
@@ -294,9 +318,10 @@ class NanoEditor(Terminal):
             return
         elif key == 'o' and 'control' in modifiers:
             self.openMode = True
-            self.textLines = []
             self.currLine = ""
-            self.output('Type file path to open: ')
+            self.index = 0
+            self.textLines = []
+            self.output("Type file path to open:")
             return
         
         # override to handle text editing keys
@@ -387,14 +412,21 @@ class NanoEditor(Terminal):
             self.drawCursor(app)
     def drawCursor(self, app):
         # get the current line being edited
+        if not self.textLines:
+            return  # no lines to draw cursor for
+        
         if self.indexY >= len(self.textLines):
             self.indexY = len(self.textLines) - 1
+        if self.indexY < 0:
+            self.indexY = 0
         
         currentLine = self.textLines[self.indexY]
         
         # clamp index to current line length
         if self.index > len(currentLine):
             self.index = len(currentLine)
+        if self.index < 0:
+            self.index = 0
         
         # calculate cursor position based on index within current line
         textToMeasure = currentLine[:self.index]
@@ -403,12 +435,16 @@ class NanoEditor(Terminal):
         cursorY = self.y + self.margin + self.indexY * self.lineSpacing + (self.lineSpacing - self.fontSize) / 2 + self.cursorCalibration
 
         # show cursor half the time
-        if app.tick % 72 > 36:
-            cursorX = self.x + self.margin + len(textToMeasure) * (self.fontSize * 0.6) 
+        if self.app.tick % 72 > 36:
+            # Use monospace character width: 0.6 * fontSize for each char
+            charWidth = self.fontSize * 0.6
+            cursorX = self.x + self.margin + len(textToMeasure) * charWidth
+            
             drawRect(cursorX, cursorY, self.fontSize * 0.45, self.fontSize, fill='white')
-            try : 
+            # only draw letter if index is within bounds
+            if self.index < len(currentLine):
                 letter = currentLine[self.index]
-            except IndexError:
+            else:
                 letter = ' '
             # display letter at exact cursor position
             letterX = cursorX + (self.fontSize * 0.45) / 2

@@ -1,10 +1,8 @@
 from cmu_graphics import *
-from ui.clientRender import ClientRender
 class WindowManager:
     def __init__(self, app):
         self.windows = {}
         self.app = app
-        self.clientRender = ClientRender(app)
         # Store ratios instead of absolute positions
         self.xRatio = 0.5  # center of screen
         self.yRatio = 0.5  # center of screen
@@ -15,6 +13,8 @@ class WindowManager:
         self.hoveredCorner = None
         self.fontSize = 0.045 * app.height
         self.menuRectSize = 0.05 * app.height
+        self.currWindow = None  # currently focused window
+        self.mouseOnWindow = False
 
         # Resizing state
         self.resizingWindow = None
@@ -47,7 +47,7 @@ class WindowManager:
         if window in self.windows:
             del self.windows[window]
             # cleanup client resources if needed
-            self.clientRender.closeClient(window)
+            self.app.clientRender.closeClient(window)
 
     def getOpenWindows(self):
         return self.windows 
@@ -130,7 +130,7 @@ class WindowManager:
         drawLabel(name, x - width // 2 , y - height // 2, size=self.fontSize, fill='black', align='left')
 
         # render client content through ClientRender
-        self.clientRender.instantClient(windowName, x, y + self.menuRectSize // 2, width, height - self.menuRectSize, 'center')
+        self.app.clientRender.instantClient(windowName, x, y + self.menuRectSize // 2, width, height - self.menuRectSize, 'center')
             
 
     def checkDrag(self, mouseX, mouseY, app):
@@ -213,6 +213,7 @@ class WindowManager:
             if left <= mouseX <= right and top <= mouseY <= bottom:
                 # Reinsert the window to the end of the dict to bring it to front
                 self.windows[windowName] = self.windows.pop(windowName)
+                self.currWindow = windowName
                 return
 
     def mousePress(self, app, mouseX, mouseY):
@@ -322,7 +323,8 @@ class WindowManager:
                 newXRatio, 
                 newYRatio
             )
-
+    
+        return False
     def stopDragging(self):
         self.draggingWindow = None
         self.dragOffsetX = 0
@@ -350,7 +352,5 @@ class WindowManager:
             self.closeAllWindows()
     
     def handleClientKeyPress(self, app, key, modifiers):
-        # route keyboard input to all active window clients
-        for windowName in self.windows:
-            # route to clientRender for keyboard input handling
-            self.clientRender.handleClientKeyPress(windowName, app, key, modifiers)
+        # route to clientRender for keyboard input handling
+        self.app.clientRender.handleClientKeyPress(self.currWindow, app, key, modifiers)   

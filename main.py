@@ -1,9 +1,13 @@
 # main.py - TartanOS
 from cmu_graphics import *
+from systems.commandRegistry import CommandRegistry
 from systems.fileSystem import FileSystem
+from systems.pathUtils import PathUtils
 from systems.userAuth import UserAuth
 from core.appModes import ModeManager
-from ui.terminal.terminal import Terminal
+from systems.windowManager import WindowManager
+from ui.clientRender import ClientRender
+from ui.terminal.terminal import Terminal, NanoEditor
 from ui.desktop.desktop import Desktop
 from ui.loginPage.loginPage import LoginPage
 
@@ -11,9 +15,19 @@ def onAppStart(app):
     # initialize core systems
     app.fs = FileSystem()
     app.auth = UserAuth()
+    app.windowManager = WindowManager(app)
+    app.clientRender = ClientRender(app)
+    app.modeManager = ModeManager(app)
+    app.cmdRegistry = CommandRegistry(app)
+    app.pathUtils = PathUtils()
     app.tick = 0
     app.mouseX = 0
     app.mouseY = 0
+
+    # store class references for dynamic instantiation
+    app.Terminal = Terminal
+    app.NanoEditor = NanoEditor
+    app.PathUtils = PathUtils
 
     # initialize mode manager
     app.modeManager = ModeManager(app)
@@ -21,6 +35,9 @@ def onAppStart(app):
     app.terminal = Terminal(app)
     app.desktop = Desktop(app)
     app.loginPage = LoginPage(app)
+
+    # set terminal reference in command registry so commands have access to currPath, fs, etc
+    app.cmdRegistry.term = app.terminal
 
     # start at login screen 
     app.modeManager.setMode('login')
@@ -45,6 +62,7 @@ def onMouseMove(app, mouseX, mouseY):
     # track mouse position
     app.mouseX = mouseX
     app.mouseY = mouseY
+    app.modeManager.mouseMove(app, mouseX, mouseY)
 
 def onMouseRelease(app, mouseX, mouseY):
     if app.modeManager.currentMode == 'desktop':

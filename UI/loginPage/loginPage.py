@@ -42,6 +42,11 @@ class LoginPage:
         self.errorDuration = 90  # frames to show error message
         
     def draw(self, app):
+        # if user is already logged in, skip to desktop
+        if app.auth.loggedInUser:
+            app.modeManager.setMode('desktop')
+            return
+        
         # draw login background image
         try:
             drawImage(self.backgroundImage, 0, 0, width=app.width, height=app.height)
