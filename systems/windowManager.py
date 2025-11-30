@@ -15,6 +15,7 @@ class WindowManager:
         self.menuRectSize = 0.05 * app.height
         self.currWindow = None  # currently focused window
         self.mouseOnWindow = False
+        self.orderWindow = [] # current windows in order
 
         # Resizing state
         self.resizingWindow = None
@@ -42,12 +43,19 @@ class WindowManager:
             'heightRatio': self.heightRatio, 
             'align': self.align
         }
+        if window not in self.orderWindow:
+            self.orderWindow.append(window)
+        self.currWindow = window  # set as current focused window
 
     def closeWindow(self, window):
         if window in self.windows:
             del self.windows[window]
             # cleanup client resources if needed
             self.app.clientRender.closeClient(window)
+        if window in self.orderWindow:
+            self.orderWindow.remove(window)
+        if self.currWindow == window:
+            self.currWindow = self.orderWindow[-1] if self.orderWindow else None
 
     def getOpenWindows(self):
         return self.windows 
@@ -207,13 +215,22 @@ class WindowManager:
         return False
     
     def pushWindowToFront(self, mouseX, mouseY, app):
-        # Push the clicked window to the front of the z-order
-        for windowName, windowData in self.windows.items():
+        # push the licked window to the front
+        for window in list(self.orderWindow):
+            if window not in self.windows:
+                
+                self.orderWindow.remove(window)
+                continue
+            windowData = self.windows[window]
             left, right, top, bottom = self.getWindowBounds(windowData, app)
             if left <= mouseX <= right and top <= mouseY <= bottom:
                 # Reinsert the window to the end of the dict to bring it to front
-                self.windows[windowName] = self.windows.pop(windowName)
-                self.currWindow = windowName
+                if window == self.currWindow:
+                    return  # already front
+                self.windows[window] = self.windows.pop(window)
+                self.orderWindow.remove(window)
+                self.orderWindow.append(window)
+                self.currWindow = window
                 return
 
     def mousePress(self, app, mouseX, mouseY):
@@ -239,8 +256,11 @@ class WindowManager:
             elif (right - 3 * self.menuRectSize <= mouseX <= right - 2 * self.menuRectSize) and (top <= mouseY <= top + self.menuRectSize):
                 # Minimize (for simplicity, just close the window)
                 self.closeWindow(windowName)
-                return    
+                return
         
+        # Route mouse press to current active window's client
+        if self.currWindow and self.currWindow in self.windows:
+            app.clientRender.onMousePress(self.currWindow, app, mouseX, mouseY)
 
     def mouseDragWindow(self, app, mouseX, mouseY):
         if not self.draggingWindow and not self.resizingWindow:
@@ -342,6 +362,7 @@ class WindowManager:
     
     def closeAllWindows(self):
         self.windows = {}
+        self.orderWindow = []
     
     def mouseRelease(self):
         self.stopDragging()

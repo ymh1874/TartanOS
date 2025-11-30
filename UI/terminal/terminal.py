@@ -19,7 +19,7 @@ class Terminal:
         self.index = 0  # cursor position in current line
 
         # small pixel calibration for caret vertical position (positive moves cursor down)
-        self.cursorCalibration = -10
+        self.cursorCalibration = -15
 
         # terminal state
         self.username = "user"
@@ -205,17 +205,7 @@ class Terminal:
     def drawCursor(self, app, y, index):
         # clamp index to current line length
         index = max(0, min(index, len(self.currLine)))
-        
-        # blinking cursor using app.tick as frame counter
-        if self.isLoggingIn:
-            # login mode cursor
-            if self.loginStage == "username":
-                textToMeasure = f"Username: {self.tempInput}"
-            else:
-                textToMeasure = f"Password: {'*' * len(self.tempInput)}"
-        else:  
-            # terminal mode cursor
-            textToMeasure =  self.prompt + self.currLine[:index] 
+        textToMeasure = self.currLine[:index]        
 
         # show cursor half the time
         if self.app.tick % 72 > 36:
@@ -250,6 +240,7 @@ class NanoEditor(Terminal):
         self.indexY = 0  # line index for cursor vertical position
         self.filePath = path
         self.openMode = False  # waiting for file path input
+        self.modeManager = kwargs.get('modeManager', None)  # reference to mode manager for exiting
         self.loadFile()
 
     def loadFile(self, path=None):
@@ -313,8 +304,10 @@ class NanoEditor(Terminal):
             self.output("File saved.")
             return
         elif key == "q" and 'control' in modifiers:
-            self.output("Exiting nano editor.")
-            self.app.modeManager.setMode('terminal')
+            # Exit nano editor and return to previous mode or desktop
+            if self.modeManager:
+                previousMode = self.modeManager.previousMode or 'desktop'
+                self.modeManager.setMode(previousMode)
             return
         elif key == 'o' and 'control' in modifiers:
             self.openMode = True

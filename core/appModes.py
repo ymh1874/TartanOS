@@ -4,15 +4,17 @@ class ModeManager:
     def __init__(self, app):
         self.app = app
         self.currentMode = None
+        self.previousMode = None  # track previous mode for going back
 
     def setMode(self, modeName, **kwargs):
         # set current mode: 'login', 'desktop', 'nano', 'terminal'
+        self.previousMode = self.currentMode  # save previous mode before switching
         self.currentMode = modeName
         
         # initialize nanoEditor if switching to nano mode
         if modeName == 'nano' and 'filePath' in kwargs:
             from ui.terminal.terminal import NanoEditor
-            self.app.terminal.nanoEditor = NanoEditor(kwargs['filePath'], self.app)
+            self.app.terminal.nanoEditor = NanoEditor(kwargs['filePath'], self.app, modeManager=self)
 
     def redraw(self, app, **kwargs):
         # render appropriate UI based on current mode

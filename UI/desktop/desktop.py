@@ -1,7 +1,10 @@
 from cmu_graphics import *
+
+from ui.desktop.clockDate import ClockDate
 class Desktop():
     def __init__(self, app):
         self.app = app
+        
         self.bgColor = rgb(80, 90, 100)  # fallback background color
         self.backgroundImage = 'assets/backgrounds/desktopBackground.png'
         self.fileIcon = 'assets/icons/fileIcon.png'
@@ -12,6 +15,8 @@ class Desktop():
         self.filesDisplayed = [] #list of files currently shown on desktop
         self.windowManager = app.windowManager
         self.fontSize = 0.034 * app.height
+        # dynamic clock/date display
+        app.clockDate = ClockDate(app, x=0, y=0, width=app.width, height=app.height)
 
     def draw(self, app):
         # draw desktop background image
@@ -22,6 +27,7 @@ class Desktop():
             drawRect(0, 0, app.width, app.height, fill=self.bgColor)
         self.drawFiles(app)
         app.windowManager.drawWindows(app, app.mouseX, app.mouseY)
+        self.drawClockDate(app)
 
     def drawFiles(self, app):
         # draw desktop icons for files and folders
@@ -45,6 +51,8 @@ class Desktop():
                     drawImage(self.terminalIcon, x, y, width=iconSize, height=iconSize)
                 elif file[0] == 'Tartano': 
                     drawImage(self.textEditorIcon, x, y, width=iconSize, height=iconSize)
+                elif file[0] == 'File Explorer':
+                    drawImage(self.folderIcon, x, y, width=iconSize, height=iconSize)
             # draw filename
             drawLabel(file[0], x + iconSize / 2, y + iconSize + 15, size=self.fontSize, align='center', fill='black')
 
@@ -56,6 +64,9 @@ class Desktop():
             if x + iconSize > app.width:
                 x = startX
                 y += iconSize + padding + 15
+
+    def drawClockDate(self, app):
+        app.clockDate.draw(app)
             
     
     def checkWindowHover(self, mouseX, mouseY):

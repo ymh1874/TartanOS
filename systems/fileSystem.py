@@ -40,10 +40,16 @@ class FileSystem:
             },
             "/home/desktop": {
                 "type": "folder",
-                "children": ["welcome.txt", "projects", "Terminal", "Tartano"],
+                "children": ["welcome.txt", "projects", "Terminal", "Tartano", "File Explorer"],
                 "permissions": "755"
             },
-            "/home/desktop/Terminal": {
+            "/home/desktop/Terminal":
+             {
+                "type": "executable",
+                "content": "",
+                "permissions": "755"
+            },
+            "/home/desktop/File Explorer": {
                 "type": "executable",
                 "content": "",
                 "permissions": "755"
@@ -150,10 +156,12 @@ class FileSystem:
     def updateParentChildren(self, path, add=True):
         # Update parent folder's children list
         parentPath, fileName = self.splitPath(path)
-        if parentPath in self.fs:
+        if parentPath and parentPath in self.fs:
             node = self.fs[parentPath]
             if node.get("type") == "folder":
-                children = node.get("children", [])
+                if "children" not in node:
+                    node["children"] = []
+                children = node["children"]
                 if add and fileName not in children:
                     children.append(fileName)
                 elif not add and fileName in children:

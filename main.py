@@ -8,6 +8,7 @@ from core.appModes import ModeManager
 from systems.windowManager import WindowManager
 from ui.clientRender import ClientRender
 from ui.terminal.terminal import Terminal, NanoEditor
+from ui.fileExplorer import FileExplorer
 from ui.desktop.desktop import Desktop
 from ui.loginPage.loginPage import LoginPage
 
@@ -27,6 +28,7 @@ def onAppStart(app):
     # store class references for dynamic instantiation
     app.Terminal = Terminal
     app.NanoEditor = NanoEditor
+    app.FileExplorer = FileExplorer
     app.PathUtils = PathUtils
 
     # initialize mode manager
@@ -48,7 +50,7 @@ def redrawAll(app):
     app.modeManager.redraw(app)
 
 
-def onKeyPress(app, key, modifiers):
+def onKeyPress(app, key, modifiers): 
     app.modeManager.keyPress(app, key, modifiers)
 
 

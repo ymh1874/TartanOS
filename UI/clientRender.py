@@ -103,11 +103,49 @@ class ClientRender:
         # draw the editor client
         editorClient.draw(self.app)
 
-    def fileExplorerClient(self, x, y, width, height, align):
+    def fileExplorerClient(self, windowName, path, x, y, width, height, align):
         # render file explorer content
         from cmu_graphics import drawLabel
-        drawLabel("File Explorer Client", x, y, size=14, fill='black', align=align)
-
+        # create or retrieve nano editor instance for this window
+        if windowName not in self.windowClients:
+            # convert center-aligned coordinates to top-left for editor
+            if align == 'center':
+                topLeftX = x - width // 2
+                topLeftY = y - height // 2
+            else:
+                topLeftX = x
+                topLeftY = y
+            
+            path = path if path is not None else "/home"
+            self.windowClients[windowName] = self.app.FileExplorer(
+                self.app,
+                x=topLeftX,
+                y=topLeftY,
+                width=width,
+                height=height,
+                path=path
+            )
+        
+        # get file explorer instance
+        explorerClient = self.windowClients[windowName]
+        
+        # convert center-aligned coordinates to top-left for explorer
+        if align == 'center':
+            topLeftX = x - width // 2
+            topLeftY = y - height // 2
+        else:
+            topLeftX = x
+            topLeftY = y
+        
+        # update dimensions in case window was resized
+        explorerClient.x = topLeftX
+        explorerClient.y = topLeftY
+        explorerClient.width = width
+        explorerClient.height = height
+        
+        # draw the explorer client
+        explorerClient.draw(self.app)
+        
     
     def changeDimensions(self, clientName, x, y, width, height, align):
         # update client dimensions on window resize
@@ -136,12 +174,16 @@ class ClientRender:
         if clientName == "Terminal":
             self.terminalClient(clientName, x, y, width, height, align)
         elif clientName == "File Explorer": 
-            self.fileExplorerClient(x, y, width, height, align)
+            self.fileExplorerClient(clientName, None, x, y, width, height, align)
         elif clientName == "Tartano":
             self.textEditorClient(clientName, x, y, width, height, align)
         elif clientName.endswith('.txt'):
             # text editor for .txt files
             self.textEditorClient(clientName, x, y, width, height, align)
+        else:
+            # default to file explorer for folders
+            path = f"/home/desktop/{clientName}"
+            self.fileExplorerClient(clientName, path, x, y, width, height, align)
     
     def handleClientKeyPress(self, clientName, app, key, modifiers):
         # route keyboard input to the appropriate client
@@ -157,6 +199,8 @@ class ClientRender:
                         self.terminalClient(clientName, x, y, w, h, windowData['align'])
                     elif clientName.endswith('.txt'):
                         self.textEditorClient(clientName, x, y, w, h, windowData['align'])
+                    elif clientName == "File Explorer":
+                        self.fileExplorerClient(clientName, x, y, w, h, windowData['align'])
             
             # Handle window snapping with Ctrl+Left and Ctrl+Right
             if modifiers == ['control'] and key == 'left':
@@ -192,21 +236,57 @@ class ClientRender:
                     0.5     # center at 50% y
                 )
                 return
+            elif modifiers == ['control'] and key == 'down':
+                print(f"Restoring {clientName} to original size")
+                # Restore window to original size (assumed 0.5x0.5 at center)
+                app.windowManager.resizeWindow(
+                    clientName,
+                    0.5,    # 50% width
+                    0.5,    # 50% height
+                    0.5,    # center at 50% x
+                    0.5     # center at 50% y
+                )
+                return
             
             # Now handle the keypress for the client
             if clientName in self.windowClients:
                 if clientName == "Terminal":
                     self.windowClients[clientName].onKeyPress(app, key, modifiers)
                 elif clientName == "Tartano":
-                    self.windowClients[clientName].onKeyPress(app, key, modifiers)
-                elif clientName.endswith('.txt'):
-                    # text editor receives keyboard input
                     if modifiers == ['control'] and key == 'q':
+                        print("Closing Tartano editor")
                         # close the editor window on Ctrl+Q
                         app.windowManager.closeWindow(clientName)
                         self.closeClient(clientName)
                         return
                     self.windowClients[clientName].onKeyPress(app, key, modifiers)
+                elif clientName.endswith('.txt'):
+                    # text editor receives keyboard input
+                    if modifiers == ['control'] and key == 'q':
+                        print("Closing Tartano editor")
+                        # close the editor window on Ctrl+Q
+                        app.windowManager.closeWindow(clientName)
+                        self.closeClient(clientName)
+                        return
+                    self.windowClients[clientName].onKeyPress(app, key, modifiers)
+                elif clientName == "File Explorer":
+                    self.windowClients[clientName].onKeyPress(app, key, modifiers)
+                else:
+                    try: self.windowClients[clientName].onKeyPress(app, key, modifiers)
+                    except: pass
+    def onMousePress(self, clientName, app, mouseX, mouseY):
+        # route mouse input to the appropriate client
+        if clientName in self.windowClients:
+            if clientName == "File Explorer":
+                self.windowClients[clientName].onMousePress(app, mouseX, mouseY)  
+            elif clientName == "Tartano":
+                pass
+            elif clientName.endswith('.txt'):
+                pass
+            elif clientName == "Terminal":
+                pass
+            else:
+                self.windowClients[clientName].onMousePress(app, mouseX, mouseY)             
     def closeClient(self, clientName):
         # cleanup when closing a window
         if clientName in self.windowClients:
