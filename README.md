@@ -3,8 +3,7 @@
 **Author:** Yousef Hussein
 
 ## TP3 Update:
-
-
+**Video Link:** https://youtu.be/CtMi6ieJjng
 ## How to run
 Make sure cmu_graphics is installed. Then just run **main.py**!
 
@@ -23,7 +22,7 @@ No libraries needed other than cmu_graphics
 ---
 
 ### **Desktop**
-- **Ctrl + T** — Open Terminal  
+- **Ctrl + T** — Open Terminal/Close Terminal  
 - **Ctrl + Left / Right** — Snap window to left or right half of the screen  
 - **Ctrl + Up / Down** — Maximize window / Restore original size  
 - **Ctrl + M** — Close all windows  
@@ -40,6 +39,56 @@ No libraries needed other than cmu_graphics
 - **Ctrl + Q** — Quit  
 - **Ctrl + S** — Save  
 
+
+## Design Strucutre:
+<strong>main.py</strong>
+
+---
+
+<details>
+<summary><strong>core</strong></summary>
+
+- appModes.py
+
+</details>
+
+---
+
+<details>
+<summary><strong>systems</strong></summary>
+
+- commandRegistry.py  
+- fileSystem.py  
+- pathUtils.py  
+- userAuth.py  
+- windowManager.py  
+
+</details>
+
+---
+
+<details>
+<summary><strong>ui</strong></summary>
+
+- desktop/desktop.py  
+- desktop/clockDate.py  
+- loginPage/loginPage.py  
+- terminal/terminal.py  
+- fileExplorer.py  
+- clientRender.py  
+
+</details>
+
+---
+
+<details>
+<summary><strong>assets</strong></summary>
+
+- backgrounds/  
+- icons/  
+- sound/  
+
+</details>
 
 ## TP1 Update
 
