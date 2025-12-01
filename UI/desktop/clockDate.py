@@ -1,6 +1,7 @@
+# ui/desktop/clockDate.py - Clock and Date display component
+# shows current time and date on desktop
 from cmu_graphics import *
 from datetime import datetime
-
 class ClockDate:
     def __init__(self, app, x, y, width, height):
         self.app = app

@@ -1,4 +1,5 @@
-# ui/terminal/terminal.py
+# ui/terminal/terminal.py - Terminal and Nano Editor UI components
+# implements terminal interface and basic text editor
 from cmu_graphics import *
 class Terminal:
     def __init__(self, app, **kwargs):

@@ -1,5 +1,7 @@
 # systems/fileSystem.py
-
+# file systems management
+# simulates a simple file system with files and folders
+# provides methods to access and manipulate files/folders
 class FileSystem:
     def __init__(self):
         self.fs = {

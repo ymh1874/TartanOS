@@ -1,3 +1,5 @@
+# ui/fileExplorer.py - File Explorer UI component
+# displays files and folders, allows navigation and searching
 from cmu_graphics import *
 class FileExplorer:
     def __init__(self, app, windowName=None, path = None,  align='center', **kwargs):

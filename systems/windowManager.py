@@ -1,3 +1,6 @@
+# systems/windowManager.py - manages application windows
+# supports opening, closing, minimizing, maximizing, dragging, and resizing windows
+# uses ratios for responsive design
 from operator import index
 from cmu_graphics import *
 class WindowManager:

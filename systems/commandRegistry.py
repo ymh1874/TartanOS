@@ -1,4 +1,6 @@
-# systems/commandRegistry.py
+# systems/commandRegistry.py - command registry system
+# manages terminal commands and their execution
+# provides implementations for various terminal commands
 import sys
 class CommandRegistry:
     def __init__(self, app):

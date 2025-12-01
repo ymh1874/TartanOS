@@ -1,4 +1,5 @@
-# systems/userAuth.py
+# systems/userAuth.py - user authentication system
+# manages user credentials and login verification
 
 class UserAuth:
     def __init__(self):

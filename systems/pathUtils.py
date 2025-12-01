@@ -1,4 +1,5 @@
-# systems/pathUtils.py
+# systems/pathUtils.py - path utility functions
+# provides functions for manipulating and resolving file system paths
 class PathUtils:
     @staticmethod
     def getParent(path):

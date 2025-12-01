@@ -1,5 +1,6 @@
+# ui/loginPage/loginPage.py - Login Page UI component
+# handles user login, input fields, and error messages
 from cmu_graphics import *
-
 from systems import userAuth
 
 class LoginPage:

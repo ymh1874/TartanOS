@@ -1,5 +1,6 @@
 # core/appModes.py - manages different app states
-
+# handles mode switching and input routing
+# modes: login, desktop, terminal, nano editor
 class ModeManager:
     def __init__(self, app):
         self.app = app

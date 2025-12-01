@@ -1,4 +1,6 @@
-# main.py - TartanOS
+# main.py - entry point for the application
+# responsible for initializing core systems and managing app modes
+# uses cmu_graphics for rendering and input handling
 from cmu_graphics import *
 from systems.commandRegistry import CommandRegistry
 from systems.fileSystem import FileSystem

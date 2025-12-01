@@ -1,4 +1,6 @@
-# ui/clientRender.py
+# ui/clientRender.py - manages rendering of different application clients within windows
+# supports Terminal, NanoEditor, FileExplorer clients
+# creates and maintains client instances per window
 class ClientRender:
     # render different application clients within windows
     def __init__(self, app):

@@ -1,5 +1,7 @@
+# ui/desktop/desktop.py - Desktop UI component
+# displays desktop background, icons, and manages windows
+# allows launching applications from desktop icons
 from cmu_graphics import *
-
 from ui.desktop.clockDate import ClockDate
 class Desktop():
     def __init__(self, app):
