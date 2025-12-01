@@ -7,6 +7,13 @@
 ## How to run
 Make sure cmu_graphics is installed. Then just run **main.py**!
 
+<br>
+<strong>User/Passwords:<strong>
+<br>
+'admin': 'root'<br>
+'bob': 'builder'<br>
+'diddy': 'trq'
+
 ## Short Description
 TartanOS provides an interactive simulation of a modern desktop operating system, created entirely with CMU Graphics. Users begin at a login screen, then move into a customizable desktop interface where they can open and rearrange windows, access system icons, and launch a fully functional terminal. The built-in file system allows users to create, modify, and go to virtual directories and files through familiar shell commands.
 
