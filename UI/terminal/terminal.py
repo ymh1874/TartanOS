@@ -215,7 +215,7 @@ class Terminal:
             cursorX = self.x + self.margin + len(textToMeasure) * charWidth  
             
             # align cursor vertically with the label's Y
-            cursorY = y + (self.lineSpacing - self.fontSize) / 2 + self.cursorCalibration
+            cursorY = y + self.lineSpacing - self.fontSize * 1.85
             drawRect(cursorX, cursorY, self.fontSize * 0.45, self.fontSize, fill='white')
             
             # only draw letter if index is within bounds
@@ -425,8 +425,7 @@ class NanoEditor(Terminal):
         textToMeasure = currentLine[:self.index]
         
         # calculate y position based on line number
-        cursorY = self.y + self.margin + self.indexY * self.lineSpacing + (self.lineSpacing - self.fontSize) / 2 + self.cursorCalibration
-
+        cursorY = self.y + self.margin + (self.indexY * self.lineSpacing) - self.fontSize * 0.5
         # show cursor half the time
         if self.app.tick % 72 > 36:
             # Use monospace character width: 0.6 * fontSize for each char

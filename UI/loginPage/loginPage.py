@@ -1,5 +1,7 @@
 from cmu_graphics import *
 
+from systems import userAuth
+
 class LoginPage:
     def __init__(self, app):
         self.app = app
@@ -9,9 +11,11 @@ class LoginPage:
         self.textColor = 'white'
         self.borderColor = 'white'
         self.activeColor = rgb(128, 0, 0)  # maroon 
+        self.userAuth = userAuth.UserAuth()
         
         # background image
         self.backgroundImage = 'assets/backgrounds/loginBackground.png'
+        self.profilePicPath = 'assets/icons/adminProfilePic.png'
         
         # input box state
         self.usernameBox = {
@@ -34,16 +38,18 @@ class LoginPage:
         
         # profile picture placeholder
         self.profilePicSize = 80
-        self.profilePicPath = 'assets/icons/profilePic.png'
+        
+        
         
         # error state for failed login attempts
+        self.loggedin = False
         self.errorMessage = ''
         self.errorTimer = 0
-        self.errorDuration = 90  # frames to show error message
+        self.errorDuration = 80  # frames to show error message
         
     def draw(self, app):
         # if user is already logged in, skip to desktop
-        if app.auth.loggedInUser:
+        if self.loggedin:
             app.modeManager.setMode('desktop')
             return
         
@@ -59,20 +65,20 @@ class LoginPage:
         labelSize = max(16, int(app.width * 0.022))  # bigger labels
         inputSize = max(14, int(app.width * 0.018))
         borderWidth = max(2, int(app.width * 0.003))
-        profileSize = max(80, int(app.height * 0.15))
+        profileSize = min(app.width, app.height) * 0.4
         buttonSize = max(14, int(app.width * 0.022))
         
-        # profile picture placeholder (top left)
-        profileX = app.width * 0.2
-        profileY = app.height * 0.15
+        # profile picture placeholder on right side
+        profileX = app.width * 0.75
+        profileY = app.height * 0.5
         self.drawProfilePicture(profileX, profileY, profileSize)
         
-        # title (left side, simple)
+        # title 
         drawLabel('Login', 
                   app.width * 0.05, app.height * 0.22,
-                  size=titleSize, bold=True, fill=self.textColor, align='left')
+                  size=titleSize, fill='white', align='left', bold = True)
         
-        # username label - bigger and more spaced
+        # username label 
         drawLabel('Username:', 
                   app.width * self.usernameBox['x'], 
                   app.height * (self.usernameBox['y'] - 0.07),
@@ -92,7 +98,7 @@ class LoginPage:
                   boxX + app.width * 0.01, boxY + boxH * 0.5,
                   size=inputSize, fill=self.textColor, align='left')
         
-        # password label - bigger and more spaced
+        # password label 
         drawLabel('Password:', 
                   app.width * self.passwordBox['x'], 
                   app.height * (self.passwordBox['y'] - 0.07),
@@ -122,6 +128,9 @@ class LoginPage:
         
         drawRect(loginButtonX, loginButtonY, loginButtonW, loginButtonH,
                  fill=self.activeColor, border=self.borderColor, borderWidth=borderWidth)
+        drawLabel('Login', 
+                  loginButtonX + loginButtonW / 2, loginButtonY + loginButtonH / 2,
+                  size=buttonSize, fill='white', align='center', bold=True)
         
         # draw error popup if there is one
         if self.errorMessage and self.errorTimer > 0:
@@ -129,19 +138,11 @@ class LoginPage:
             self.errorTimer -= 1
     
     def drawProfilePicture(self, centerX, centerY, size):
-        # draw profile picture placeholder circle with responsive sizing
-        try:
-            drawImage(self.profilePicPath, centerX - size // 2, 
-                     centerY - size *  2 // 3,
-                     width=size, height=size)
-        except:
-            # fallback: draw circle placeholder with responsive border
-            radius = size // 2
-            borderWidth = max(1, int(size * 0.05))
-            drawCircle(centerX, centerY, radius, 
-                      fill=rgb(100, 100, 100), border='white', borderWidth=borderWidth)
-            labelSize = max(10, int(size * 0.3))
-            drawLabel('USER', centerX, centerY, size=labelSize, fill='white', bold=True)
+        # draw profile picture on right side
+            drawImage(self.profilePicPath, app.width * 0.85 , 
+                      app.height * 0.5,
+                     width=size, height=size, align='center')
+        
     
     def drawErrorPopup(self, app):
         # draw error popup message in center of screen
@@ -170,6 +171,18 @@ class LoginPage:
             self.errorMessage = ''
             self.errorTimer = 0
             return
+        if modifiers == ['shift'] and key == 'right':
+            self.userAuth.loggedInUser = 'bob'
+            self.profilePicPath = 'assets/icons/bobProfilePic.png'
+            self.usernameBox['text'] = 'bob'
+        elif modifiers == ['shift'] and key == 'left':
+            self.userAuth.loggedInUser = 'admin'
+            self.profilePicPath = 'assets/icons/adminProfilePic.png'
+            self.usernameBox['text'] = 'admin'
+        elif modifiers == ['shift'] and key == 'down':
+            self.userAuth.loggedInUser = 'diddy'
+            self.profilePicPath = 'assets/icons/diddyProfilePic.png'
+            self.usernameBox['text'] = 'diddy'
         
         # handle ctrl+t to switch to terminal (use terminal's login)
         if modifiers and modifiers == ['control'] and key == 't':
@@ -282,6 +295,7 @@ class LoginPage:
             # login successful - go to desktop
             self.app.terminal.username = username
             self.app.terminal.isLoggingIn = False
+            self.loggedin = True
             self.app.modeManager.setMode('desktop')
         else:
             # login failed - show error, clear both fields, reset to username box

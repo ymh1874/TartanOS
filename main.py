@@ -42,7 +42,7 @@ def onAppStart(app):
     app.cmdRegistry.term = app.terminal
 
     # start at login screen 
-    app.modeManager.setMode('login')
+    app.modeManager.setMode('terminal')
 
 
 def redrawAll(app):

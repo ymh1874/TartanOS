@@ -1,3 +1,4 @@
+from operator import index
 from cmu_graphics import *
 class WindowManager:
     def __init__(self, app):
@@ -33,6 +34,8 @@ class WindowManager:
         self.dragOffsetX = 0
         self.dragOffsetY = 0
 
+        self.indexMin = 0  # index for minimized windows
+
     
     def openWindow(self, window, app):
         # Store ratios for responsive resizing
@@ -62,6 +65,7 @@ class WindowManager:
         
     def restoreWindow(self, window, app):
         if window in self.minimizedWindows:
+            self.indexMin -= 1
             self.openWindow(window, app)
             self.minimizedWindows.remove(window)
     # Calculate actual dimensions based on app size and ratios
@@ -138,7 +142,7 @@ class WindowManager:
             drawRect(x, y, width, height, fill='darkGrey', align='left')
             drawLabel(f"[{index+1}] {minWin}", x + width // 2, y + height // 2, size=self.fontSize, align='center', fill='white')
             print(f"Drawing minimized window: {minWin} at ({x}, {y})")
-                    
+                        
 
     def windowClient(self, windowName, name, x, y, width, height):
         # Draw window with center alignment
@@ -265,7 +269,9 @@ class WindowManager:
             # Check if minimize button clicked
             elif (right - 3 * self.menuRectSize <= mouseX <= right - 2 * self.menuRectSize) and (top <= mouseY <= top + self.menuRectSize):
                 # Minimize (for simplicity, just close the window)
-                self.minimizeWindow(windowName)
+                if self.indexMin < 5:  # limit number of minimized windows shown
+                    self.indexMin += 1
+                    self.minimizeWindow(windowName)
                 return
         for minWin in self.minimizedWindows:
             # align on top left on clock date bar

@@ -3,10 +3,12 @@
 class UserAuth:
     def __init__(self):
         self.users = {
-            'yousef': '112',
-            'admin': 'root'
+            'admin': 'root',
+            'bob': 'builder',
+            'diddy': 'kong'
         }
-        self.loggedInUser = None
+        
+        self.loggedInUser = 'admin'
     def verify(self, username, password):
         if self.users.get(username) == password:
             self.loggedInUser = username
