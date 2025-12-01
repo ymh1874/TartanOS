@@ -93,7 +93,7 @@ class CommandRegistry:
         node = self.app.fs.get(path)
         content = node.get("content", "")
         if content == '':
-            self.output("<empty>")
+            term.output("<empty>")
         else:
             for line in content.splitlines():
                 term.output(line)

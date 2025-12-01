@@ -392,7 +392,7 @@ class NanoEditor(Terminal):
                 
         # draw nano footer
         drawRect(self.x, footerY, self.w, self.lineSpacing, fill='grey')
-        drawLabel("^S Save  ^Q Quit", self.x + self.margin, footerY + (self.lineSpacing - self.fontSize) / 2,
+        drawLabel("^S Save  ^Q Quit", self.x + self.margin, footerY * 1.005 + (self.lineSpacing - self.fontSize) / 2,
             size=self.fontSize, fill='red', font='monospace', align='left')
         # draw cursor at index
         if self.textLines:
