@@ -115,6 +115,4 @@ class Desktop():
     def onMouseRelease(self, app, mouseX, mouseY):
         app.windowManager.stopDragging()
                           
-    def onMouseMove(self, app, mouseX, mouseY):
-        pass
     

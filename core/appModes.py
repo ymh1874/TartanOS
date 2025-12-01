@@ -23,7 +23,7 @@ class ModeManager:
         elif self.currentMode == 'desktop':
             app.desktop.draw(app)
         elif self.currentMode == 'terminal':
-            app.terminal.draw(app, **kwargs)
+            app.terminal.draw(app, fullState = True )
         elif self.currentMode == 'nano':
             if app.terminal.nanoEditor:
                 app.terminal.nanoEditor.draw(app, **kwargs)
@@ -58,7 +58,4 @@ class ModeManager:
         if self.currentMode == 'desktop':
             app.desktop.windowManager.mouseDragWindow(app, mouseX, mouseY)
     
-    def mouseMove(self, app, mouseX, mouseY):
-        # mouse move input to current mode
-        if self.currentMode == 'desktop':
-            app.desktop.onMouseMove(app, mouseX, mouseY)
+

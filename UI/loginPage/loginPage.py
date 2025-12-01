@@ -6,25 +6,26 @@ class LoginPage:
     def __init__(self, app):
         self.app = app
         # colors
-        self.bgColor = rgb(34, 139, 34)  # forest green fallback
         self.boxColor = rgb(50, 50, 50)  # dark gray
         self.textColor = 'white'
         self.borderColor = 'white'
         self.activeColor = rgb(128, 0, 0)  # maroon 
         self.userAuth = userAuth.UserAuth()
+        self.errorXp = Sound('assets/sound/winXpError.mp3')
+        self.startupXp = Sound('assets/sound/winXpStartup.mp3')
         
         # background image
         self.backgroundImage = 'assets/backgrounds/loginBackground.png'
         self.profilePicPath = 'assets/icons/adminProfilePic.png'
         
-        # input box state
+        # input box 
         self.usernameBox = {
             'x': 0.05,
             'y': 0.35,
             'width': 0.3,
             'height': 0.1,
             'active': False,
-            'text': ''
+            'text': 'admin'
         }
         
         self.passwordBox = {
@@ -34,18 +35,13 @@ class LoginPage:
             'height': 0.1,
             'active': False,
             'text': ''
-        }
-        
-        # profile picture placeholder
-        self.profilePicSize = 80
-        
-        
+        }      
         
         # error state for failed login attempts
         self.loggedin = False
         self.errorMessage = ''
         self.errorTimer = 0
-        self.errorDuration = 80  # frames to show error message
+        self.errorDuration = 60  # frames to show error message
         
     def draw(self, app):
         # if user is already logged in, skip to desktop
@@ -58,11 +54,11 @@ class LoginPage:
             drawImage(self.backgroundImage, 0, 0, width=app.width, height=app.height)
         except:
             # fallback to green color if image not found
-            drawRect(0, 0, app.width, app.height, fill=self.bgColor)
+            drawRect(0, 0, app.width, app.height, fill= 'green')
         
         # calculate responsive sizes based on screen dimensions
         titleSize = max(28, int(app.width * 0.035))
-        labelSize = max(16, int(app.width * 0.022))  # bigger labels
+        labelSize = max(16, int(app.width * 0.022))  
         inputSize = max(14, int(app.width * 0.018))
         borderWidth = max(2, int(app.width * 0.003))
         profileSize = min(app.width, app.height) * 0.4
@@ -120,7 +116,7 @@ class LoginPage:
                   boxX + app.width * 0.01, boxY + boxH * 0.5,
                   size=inputSize, fill=self.textColor, align='left')
         
-        # login button - left side, simple
+        # login button 
         loginButtonY = app.height * 0.70
         loginButtonH = app.height * 0.07
         loginButtonW = app.width * 0.2
@@ -128,12 +124,13 @@ class LoginPage:
         
         drawRect(loginButtonX, loginButtonY, loginButtonW, loginButtonH,
                  fill=self.activeColor, border=self.borderColor, borderWidth=borderWidth)
-        drawLabel('Login', 
+        drawLabel('LOGIN', 
                   loginButtonX + loginButtonW / 2, loginButtonY + loginButtonH / 2,
                   size=buttonSize, fill='white', align='center', bold=True)
         
         # draw error popup if there is one
         if self.errorMessage and self.errorTimer > 0:
+            self.errorXp.play(restart = True)
             self.drawErrorPopup(app)
             self.errorTimer -= 1
     
@@ -189,7 +186,7 @@ class LoginPage:
             # reset terminal's login state and switch to terminal
             self.app.terminal.isLoggingIn = True
             self.app.terminal.loginStage = "username"
-            self.app.terminal.tempUsername = ""
+            self.app.terminal.tempUsername = "admin"
             self.app.terminal.tempPassword = ""
             self.app.terminal.tempInput = ""
             self.app.terminal.textLines = []
@@ -296,6 +293,7 @@ class LoginPage:
             self.app.terminal.username = username
             self.app.terminal.isLoggingIn = False
             self.loggedin = True
+            self.startupXp.play(restart=True)
             self.app.modeManager.setMode('desktop')
         else:
             # login failed - show error, clear both fields, reset to username box

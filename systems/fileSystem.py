@@ -93,7 +93,6 @@ class FileSystem:
         return path in self.fs
     
     def moveFile(self, oldPath, newPath):
-        #not working yet
         if oldPath in self.fs and newPath not in self.fs:
             self.fs[newPath] = self.fs.pop(oldPath)
             self.updateParentChildren(oldPath, add=False)
@@ -112,7 +111,7 @@ class FileSystem:
         return node is not None and node.get("type") == "executable"
     
     def getChildren(self, path):
-        # Get list of children for a folder
+        # Get list of children (sub folders/files) for a folder
         node = self.fs.get(path)
         if node and node.get("type") == "folder":
             return node.get("children", [])

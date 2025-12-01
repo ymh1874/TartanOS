@@ -9,7 +9,7 @@ class ClockDate:
         self.width = width
         self.height = height
         self.background = "assets/backgrounds/clockDate.png"
-        self.fontSize = min(0.01 * app.height, 0.01 * app.width)
+        self.fontSize = min(0.025 * app.height, 0.025 * app.width)
 
     def draw(self, app):
         # Update sizes dynamically for responsiveness

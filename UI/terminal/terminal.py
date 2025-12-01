@@ -164,9 +164,14 @@ class Terminal:
         elif len(key) == 1:
             self.tempInput += key
 
-    def draw(self, app):
+    def draw(self, app, fullState = False):
         # for windowed terminal, use instance dimensions instead of app dimensions
         # recalculate visual properties based on current bounds
+        if fullState == True:
+            self.x = 0
+            self.y = 0
+            self.w = app.width
+            self.h = app.height
         self.fontSize = max(12, int(self.w * 0.018))
         self.lineSpacing = self.fontSize * 1.3
         self.margin = self.w * 0.015
@@ -285,9 +290,6 @@ class NanoEditor(Terminal):
                         self.currLine = ""
                         self.index = 0
                     return
-                else:
-                    self.output("Please enter a file path:")
-                    return
             elif key == 'backspace':
                 self.currLine = self.currLine[:-1]
             elif isinstance(key, str) and len(key) == 1:
@@ -298,10 +300,8 @@ class NanoEditor(Terminal):
         if key == "s" and 'control' in modifiers:
             self.saveFile()
             self.textLines = []
-            self.output("Enter file name to save:")
-            
-            
             self.output("File saved.")
+            self.output('ctrl q to exit')
             return
         elif key == "q" and 'control' in modifiers:
             # Exit nano editor and return to previous mode or desktop
@@ -309,13 +309,7 @@ class NanoEditor(Terminal):
                 previousMode = self.modeManager.previousMode or 'desktop'
                 self.modeManager.setMode(previousMode)
             return
-        elif key == 'o' and 'control' in modifiers:
-            self.openMode = True
-            self.currLine = ""
-            self.index = 0
-            self.textLines = []
-            self.output("Type file path to open:")
-            return
+        
         
         # override to handle text editing keys
         if key == "enter":
@@ -398,7 +392,7 @@ class NanoEditor(Terminal):
                 
         # draw nano footer
         drawRect(self.x, footerY, self.w, self.lineSpacing, fill='grey')
-        drawLabel("^O Open  ^S Save  ^Q Quit", self.x + self.margin, footerY + (self.lineSpacing - self.fontSize) / 2,
+        drawLabel("^S Save  ^Q Quit", self.x + self.margin, footerY + (self.lineSpacing - self.fontSize) / 2,
             size=self.fontSize, fill='red', font='monospace', align='left')
         # draw cursor at index
         if self.textLines:

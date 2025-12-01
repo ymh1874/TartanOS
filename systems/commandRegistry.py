@@ -16,7 +16,6 @@ class CommandRegistry:
             'cd': self.cmdCd,
             'pwn': self.cmdPwn,
             'style': self.cmdStyle,
-            'gui': self.cmdGui,
             'mkdir': self.cmdMkdir,
             'rm': self.cmdRm,
             'backshot': self.cmdBackshot,
@@ -72,7 +71,7 @@ class CommandRegistry:
         if children:
             term.output(' '.join(children))
         else:
-            term.output("")
+            term.output("<empty>")
 
     def cmdCat(self, term, args):
         # Display file contents
@@ -93,8 +92,11 @@ class CommandRegistry:
 
         node = self.app.fs.get(path)
         content = node.get("content", "")
-        for line in content.splitlines():
-            term.output(line)
+        if content == '':
+            self.output("<empty>")
+        else:
+            for line in content.splitlines():
+                term.output(line)
 
     def cmdClear(self, term, args):
         term.clear()
@@ -107,7 +109,7 @@ class CommandRegistry:
         term.output(f"You are logged in as {term.username}")
 
     def cmdVersion(self, term, args):
-        term.output("TartanOS v1.0")
+        term.output("TartanOS v6.7")
 
     def cmdTouch(self, term, args):
         # Create a new empty file
@@ -157,7 +159,7 @@ class CommandRegistry:
         path = term.resolvePath(name)
 
         if self.app.fs.exists(path):
-            term.output("already exists")
+            term.output("folder already exists")
             return
 
         self.app.fs.createFolder(path)
@@ -216,6 +218,7 @@ class CommandRegistry:
         term.output(f"color changed to {args[0]}")
 
     def cmdGui(self, term, args):
+        # not used anymore
         term.output("Switching to GUI mode...")
         self.app.modeManager.setMode('desktop')
 

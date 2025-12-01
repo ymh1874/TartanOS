@@ -5,7 +5,7 @@ class UserAuth:
         self.users = {
             'admin': 'root',
             'bob': 'builder',
-            'diddy': 'kong'
+            'diddy': 'trq'
         }
         
         self.loggedInUser = 'admin'

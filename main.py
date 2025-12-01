@@ -25,7 +25,7 @@ def onAppStart(app):
     app.mouseX = 0
     app.mouseY = 0
 
-    # store class references for dynamic instantiation
+    # store class references for  instantiation
     app.Terminal = Terminal
     app.NanoEditor = NanoEditor
     app.FileExplorer = FileExplorer
@@ -42,8 +42,7 @@ def onAppStart(app):
     app.cmdRegistry.term = app.terminal
 
     # start at login screen 
-    app.modeManager.setMode('terminal')
-
+    app.modeManager.setMode('login')
 
 def redrawAll(app):
     # render current mode
@@ -59,12 +58,6 @@ def onMousePress(app, mouseX, mouseY):
 
 def onMouseDrag(app, mouseX, mouseY):
     app.modeManager.mouseDrag(app, mouseX, mouseY)
-
-def onMouseMove(app, mouseX, mouseY):
-    # track mouse position
-    app.mouseX = mouseX
-    app.mouseY = mouseY
-    app.modeManager.mouseMove(app, mouseX, mouseY)
 
 def onMouseRelease(app, mouseX, mouseY):
     if app.modeManager.currentMode == 'desktop':
