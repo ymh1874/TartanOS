@@ -2,7 +2,7 @@
 # displays desktop background, icons, and manages windows
 # allows launching applications from desktop icons
 from cmu_graphics import *
-from ui.desktop.clockDate import ClockDate
+from UI.desktop.clockDate import ClockDate
 class Desktop():
     def __init__(self, app):
         self.app = app

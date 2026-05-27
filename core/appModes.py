@@ -14,7 +14,7 @@ class ModeManager:
         
         # initialize nanoEditor if switching to nano mode
         if modeName == 'nano' and 'filePath' in kwargs:
-            from ui.terminal.terminal import NanoEditor
+            from UI.terminal.terminal import NanoEditor
             self.app.terminal.nanoEditor = NanoEditor(kwargs['filePath'], self.app, modeManager=self)
 
     def redraw(self, app, **kwargs):

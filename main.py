@@ -8,11 +8,11 @@ from systems.pathUtils import PathUtils
 from systems.userAuth import UserAuth
 from core.appModes import ModeManager
 from systems.windowManager import WindowManager
-from ui.clientRender import ClientRender
-from ui.terminal.terminal import Terminal, NanoEditor
-from ui.fileExplorer import FileExplorer
-from ui.desktop.desktop import Desktop
-from ui.loginPage.loginPage import LoginPage
+from UI.clientRender import ClientRender
+from UI.terminal.terminal import Terminal, NanoEditor
+from UI.fileExplorer import FileExplorer
+from UI.desktop.desktop import Desktop
+from UI.loginPage.loginPage import LoginPage
 
 def onAppStart(app):
     # initialize core systems
